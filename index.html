@@ -1,0 +1,35 @@
+<link rel="stylesheet" href="styles.css">
+
+<body>
+  <main class="two-col">
+    <section id="left">
+      <!-- existing content unchanged -->
+      <h1 style="margin-left: 20px;" class="txt">bitlog</h1>
+      <section id="entry-box">
+        <div id="inline-form">
+          <input id="name" maxlength="40" placeholder="name">
+          <input id="password" type="password" placeholder="password (optional)">
+          <input id="text" maxlength="120" placeholder="10 words max">
+          <button id="submit">post</button>
+        </div>
+        <div id="msg"></div>
+      </section>
+
+      <section id="viz">
+        <h2 id="who"></h2>
+        <div id="calendar"></div>
+        <h3>timeline</h3>
+        <ul id="timeline"></ul>
+      </section>
+    </section>
+
+    <aside id="right">
+      <h3>everyone</h3>
+      <ul id="users"></ul>
+      <h3 style="margin-top:1rem;">latest entries</h3>
+      <ul id="all-timeline"></ul>
+    </aside>
+  </main>
+  <script src="app.js"></script>
+</body>
+
