@@ -10,7 +10,8 @@ const textEl = $("#text");
 const msgEl  = $("#msg");
 const whoEl  = $("#who");
 const usersUl = $("#users");
-const allUl   = $("#all-timeline");
+const allUl   = $("#all-timeline"); // latest entries
+const ul = $("#timeline");
 
 /* ---------- word counting (client guard only) ---------- */
 function countWords(s){ const m = String(s||"").match(/\b[\w’'-]+\b/g); return m ? m.length : 0; }
@@ -18,13 +19,16 @@ function countWords(s){ const m = String(s||"").match(/\b[\w’'-]+\b/g); return
 /* ---------- 5am-local “journal day” helpers ---------- */
 const JOURNAL_OFFSET_H  = 5;                             // 5-hour cutoff after local midnight
 const JOURNAL_OFFSET_MS = JOURNAL_OFFSET_H * 3600 * 1000;
+// const JOURNAL_OFFSET_MS = 0;
 const pad2 = n => String(n).padStart(2,"0");
 
 /* Map a Date -> "YYYY-MM-DD" using a 5am local cutoff:
    subtract 5h, then format using local Y/M/D. */
 function journalLocalISO(d){
-  const adj = new Date(d.getTime() - JOURNAL_OFFSET_MS);
-  return `${adj.getFullYear()}-${pad2(adj.getMonth()+1)}-${pad2(adj.getDate())}`;
+  // const adj = new Date(d.getTime() - JOURNAL_OFFSET_MS);
+  const adj = new Date(d.getTime());
+  // return `${adj.getFullYear()}-${pad2(adj.getMonth()+1)}-${pad2(adj.getDate())}`;
+  return `${adj.getUTCFullYear()}-${pad2(adj.getUTCMonth()+1)}-${pad2(adj.getUTCDate())}`;
 }
 
 /* Parse backend timestamps:
@@ -38,7 +42,9 @@ function parseTSToDate(ts){
   // numeric
   if (typeof ts === "number") {
     if (!Number.isFinite(ts)) return null;
-    return new Date(ts * 1000);
+    const local = new Date(ts * 1000);
+    // console.log((local.getYear() + 1900) + " " + local.getMonth() + " " + local.getDate());
+    return new Date(Date.UTC(local.getYear() + 1900, local.getMonth(), local.getDate()));
   }
   // decimal-as-string or plain int string
   if (typeof ts === "string") {
@@ -106,41 +112,65 @@ async function load(name){
   await Promise.all([loadTimeline(name), loadCalendar(name)]);
 }
 
-async function loadTimeline(name){
-  const ul = $("#timeline"); ul.innerHTML = "";
+function entries_to_dayToEntry(entries) {
+  // Aggregate by journal day (local +5h) -> max word count that day
+  const dayToEntry = Object.create(null);
+  for (const e of entries) {
+    // console.log(e.ts - JOURNAL_OFFSET_MS/1000);
+    const key = parseTSToDate(e.ts - JOURNAL_OFFSET_MS/1000);
+    // console.log(journalLocalISO(key));
+    if (!key)
+      continue;
+    if (!dayToEntry[key] || e.ts > dayToEntry[key].ts)
+      dayToEntry[key] = { text: e.text, day: key, ts: e.ts, user: e.user };
+  }
+  return dayToEntry;
+}
+
+async function fetch_calendar(name) {
+  let entries = [];
   try {
-    const res = await fetch(api(`/user/${encodeURIComponent(name)}`));
-    if (!res.ok) throw new Error("user not found");
-    const j = await res.json();
+    const res = await fetch(api(`/calendar/${encodeURIComponent(name)}`));
+    if (res.ok) {
+      const j = await res.json();
+      if (Array.isArray(j.entries))
+        entries = j.entries;
+    }
+  } catch { /* ignore; show empty grid */ }
+  // console.log(entries);
+  return entries_to_dayToEntry(entries);
+}
 
-    // Ensure chronological (backend already asc, but be safe)
-    const entries = Array.isArray(j.entries) ? j.entries.slice() : [];
-    entries.sort((a,b) => {
-      const da = parseTSToDate(a.ts)?.getTime() ?? 0;
-      const db = parseTSToDate(b.ts)?.getTime() ?? 0;
-      return da - db;
-    });
+async function loadTimeline(name){
+  console.log("loadTimeline: IN");
+  ul.innerHTML = "";
+  const dayToEntry = await fetch_calendar(name);
+  // console.log(dayToEntry);
+  const entries = Object.values(dayToEntry).sort((a, b) => b.ts - a.ts);
+  // console.log(entries);
 
-    entries.forEach(e => {
-      const dObj = parseTSToDate(e.ts);
-      const dayStr = dObj ? journalLocalISO(dObj) : "(unknown day)";
-      const wc = countWords(e.text);
+  entries.forEach(e => {
+    const dObj = e.day;
+    // console.log(dObj);
+    // console.log(journalLocalISO(dObj));
+    // const dayStr = dObj ? journalLocalISO(dObj) : "(unknown day)";
+    const dayStr = dObj ? journalLocalISO(dObj) : "(unknown day)";
+    const wc = countWords(e.text);
 
-      const li = document.createElement("li");
+    const li = document.createElement("li");
 
-      const d  = document.createElement("span");
-      d.className = "date";
-      d.textContent = decodeHTML(`${dayStr} - ${wc} word${wc===1?"":"s"}`);
+    const d  = document.createElement("span");
+    d.className = "date";
+    d.textContent = decodeHTML(`${dayStr} - ${wc} word${wc===1?"":"s"}`);
 
-      const t  = document.createElement("span");
-      t.className = "txt";
-      t.textContent = decodeHTML(e.text || "");
-      t.style.marginLeft = "10px";
+    const t  = document.createElement("span");
+    t.className = "txt";
+    t.textContent = decodeHTML(e.text || "");
+    t.style.marginLeft = "10px";
 
-      li.appendChild(d); li.appendChild(t);
-      ul.appendChild(li);
-    });
-  } catch (e) { msg(String(e.message || e)); }
+    li.appendChild(d); li.appendChild(t);
+    ul.appendChild(li);
+  });
 }
 
 /* ---------- GitHub-style heatmap ---------- */
@@ -170,32 +200,16 @@ async function loadCalendar(name){
   const firstSunday = new Date(startOfWeekLocal(end).getTime() - 52*7*24*60*60*1000);
 
   // Fetch timestamped entries: { entries: [{ts, text}, ...] }
-  let entries = [];
-  try {
-    const res = await fetch(api(`/calendar/${encodeURIComponent(name)}`));
-    if (res.ok) {
-      const j = await res.json();
-      if (Array.isArray(j.entries)) entries = j.entries;
-    }
-  } catch { /* ignore; show empty grid */ }
-
-  // Aggregate by journal day (local +5h) -> max word count that day
-  const dayToCount = Object.create(null);
-  for (const e of entries) {
-    const dObj = parseTSToDate(e.ts);
-    if (!dObj) continue;
-    const key = journalLocalISO(dObj);      // local 5h day key
-    const wc  = countWords(e.text);
-    if (!dayToCount[key] || wc > dayToCount[key]) dayToCount[key] = wc;
-  }
+  const dayToEntry = await fetch_calendar(name);
 
   // Build cells column-by-column (weeks), row-by-row (days)
   let cur = new Date(firstSunday.getFullYear(), firstSunday.getMonth(), firstSunday.getDate());
   for (let col = 0; col < 53; col++) {
     for (let row = 0; row < 7; row++) {
-      const d = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate());
-      const key = journalLocalISO(d); // 5h-local cutoff date string
-      const wc  = dayToCount[key] || 0;
+      const _d = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate());
+      const date = journalLocalISO(_d);      // local 5h day key
+      const key = parseTSToDate(date);      // local 5h day key
+      const wc = dayToEntry[key] ? countWords(dayToEntry[key].text) : 0;
 
       const cell = document.createElement("div");
       cell.className = "day";
@@ -226,31 +240,42 @@ async function loadUsers(){
 
 async function loadAll(){
   allUl.innerHTML = "";
-  try{
-    const r=await fetch(api('/all_recent?limit=200'));
-    if (!r.ok) throw new Error("failed to load recent");
-    const j=await r.json();
+  const r=await fetch(api('/all_recent?limit=200'));
+  if (!r.ok) throw new Error("failed to load recent");
+  const j=await r.json();
 
-    const entries = Array.isArray(j.entries) ? j.entries : [];
-    entries.forEach(e=>{
-      const tsDate = parseTSToDate(e.ts);
-      const dayStr = tsDate ? journalLocalISO(tsDate) : "(unknown day)";
+  let data = Array.isArray(j.entries) ? j.entries : [];
+  const byUser = new Map();
+  for (const e of data) {
+    let user_entries = byUser.get(e.user);
+    if (!user_entries) { user_entries = []; byUser.set(e.user, user_entries); }
+    user_entries.push(e);
+  }
+  const merged = [];
+  for (const userEntries of byUser.values()) {
+    const dayToEntry = entries_to_dayToEntry(userEntries);
+    merged.push(...Object.values(dayToEntry));
+  }
+  const entries = merged.sort((a, b) => b.ts - a.ts);
+  console.log(entries);
+  entries.forEach(e=>{
+    const tsDate = parseTSToDate(e.ts);
+    const dayStr = tsDate ? journalLocalISO(tsDate) : "(unknown day)";
 
-      const li=document.createElement('li');
-      const meta=document.createElement('span'); meta.className='meta';
+    const li=document.createElement('li');
+    const meta=document.createElement('span'); meta.className='meta';
 
-      const name=document.createElement('a'); name.textContent=decodeHTML('@' + e.user); name.href='#';
-      name.addEventListener('click', (ev)=>{ ev.preventDefault(); nameEl.value=e.user; load(e.user); });
+    const name=document.createElement('a'); name.textContent=decodeHTML('@' + e.user); name.href='#';
+    name.addEventListener('click', (ev)=>{ ev.preventDefault(); nameEl.value=e.user; load(e.user); });
 
-      meta.appendChild(document.createTextNode(`${dayStr} - `));
-      meta.appendChild(name);
+    meta.appendChild(document.createTextNode(`${dayStr} - `));
+    meta.appendChild(name);
 
-      const txt=document.createElement('span'); txt.className='txt';
-      txt.textContent=decodeHTML(e.text || "");
+    const txt=document.createElement('span'); txt.className='txt';
+    txt.textContent=decodeHTML(e.text || "");
 
-      li.appendChild(meta); li.appendChild(txt); allUl.appendChild(li);
-    });
-  }catch{ /* ignore */ }
+    li.appendChild(meta); li.appendChild(txt); allUl.appendChild(li);
+  });
 }
 
 /* ---------- messages & wiring ---------- */
