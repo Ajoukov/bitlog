@@ -48,3 +48,50 @@ button { background:var(--accent); color:#081120; border:0; border-radius:8px; p
 #timeline .date { color:var(--muted); font-size:.9rem; }
 #timeline .text { display:block; margin-top:.2rem; white-space:pre-wrap; }
 
+/* for devices with width <= 640px */
+@media (max-width: 640px) {
+  :root {
+    --gutter: 10px;
+    --stack-gap: 16px;
+    --top-pad: 1px;
+  }
+  html, body { overflow-x: hidden; }
+  * { box-sizing: border-box; }
+
+  main.two-col {
+    display: block;
+    padding-inline: var(--gutter);
+    padding-top: var(--top-pad);
+  }
+
+  #left .txt { margin-left: 0 !important; margin-right: 0 !important; }
+
+  #entry-box,
+  #viz,
+  #right {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 0 var(--stack-gap) 0;
+  }
+
+  #right { margin-bottom: 0; }
+
+  #inline-form { display: grid !important; grid-template-columns: 1fr; gap: .5rem; }
+  #inline-form input,
+  #inline-form textarea,
+  #inline-form #text,
+  #inline-form select {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding-block: .8rem;
+    line-height: 1.2;
+    font-size: 1rem;
+  }
+  #inline-form #name { order: 1; }
+  #inline-form #password { order: 2; }
+  #inline-form #text { order: 3; }
+  #inline-form button { order: 4; justify-self: start; padding-block: .75rem; }
+
+  #users, #all-timeline { overflow-x: hidden; }
+  #users li, #all-timeline li, #all-timeline .txt { overflow-wrap: anywhere; word-break: break-word; }
+}
