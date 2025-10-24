@@ -3,13 +3,14 @@
 
 body {font-family: Arial, sans-serif; color:white;}
 body.two-col { display:grid; grid-template-columns: 1fr 320px; gap:1rem; }
-main.two-col { display:grid; grid-template-columns: 1fr 320px; gap:1rem; }
+main.two-col { display:grid; grid-template-columns: minmax(0,1fr) 320px; gap:1rem; }
+main.two-col > * { min-width: 0; }
 #left section, #right { background:#111118; border:1px solid #222230; border-radius:10px; padding:1rem; }
 #right h3 { margin:.2rem 0 .6rem; font-size:1.05rem; }
 #users, #all-timeline { list-style:none; padding:0; margin:0; max-height:60vh; overflow:auto; }
 #users li { padding:.25rem 0; border-bottom:1px dashed #2a2a38; }
 /* #users a { color:var(--accent); text-decoration:none; cursor:pointer; } */
-#all-timelines a { color:var(--accent); text-decoration:none; cursor:pointer; }
+#all-timeline a { color:var(--accent); text-decoration:none; cursor:pointer; }
 a:hover { text-decoration:underline; }
 #all-timeline li { padding:.4rem 0; border-bottom:1px dashed #2a2a38; }
 #all-timeline .meta { color:var(--muted); font-size:.9rem; }
@@ -58,11 +59,15 @@ button { background:var(--accent); color:#081120; border:0; border-radius:8px; p
   html, body { overflow-x: hidden; }
   * { box-sizing: border-box; }
 
+  body.two-col,
   main.two-col {
-    display: block;
+    display: block !important;
     padding-inline: var(--gutter);
     padding-top: var(--top-pad);
   }
+
+  #viz { overflow-x: auto; }
+  #calendar { max-width: 100%; }
 
   #left .txt { margin-left: 0 !important; margin-right: 0 !important; }
 
