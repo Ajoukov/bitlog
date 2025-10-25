@@ -30,7 +30,7 @@ app = Flask(__name__)
 APP_VERSION = "ts-only-epoch-utc-2025-10-18"
 
 # ==================== Text utils ====================
-WORD_RE = re.compile(r"\b[\w’'-]+\b", re.UNICODE)
+WORD_RE = re.compile(r"\b[\w’'-]+\b")
 
 def count_words(s: str) -> int:
     # Server still enforces <= 10 words, but we do NOT store this count.

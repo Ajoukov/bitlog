@@ -14,7 +14,7 @@ const allUl   = $("#all-timeline"); // latest entries
 const ul = $("#timeline");
 
 /* ---------- word counting (client guard only) ---------- */
-function countWords(s){ const m = String(s||"").match(/\b[\w’'-]+\b/g); return m ? m.length : 0; }
+function countWords(s){ const m = String(s||"").match(/\b[\w’'-]+\b/gu); return m ? m.length : 0; }
 
 /* ---------- 5am-local “journal day” helpers ---------- */
 const JOURNAL_OFFSET_H  = 5;                             // 5-hour cutoff after local midnight
