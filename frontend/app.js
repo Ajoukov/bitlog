@@ -300,8 +300,7 @@ async function loadAll() {
   const entries = merged.sort((a, b) => b.ts - a.ts);
   console.log(entries);
   entries.forEach((e) => {
-    const tsDate = parseTSToDate(e.ts);
-    const dayStr = tsDate ? journalLocalISO(tsDate) : "(unknown day)";
+    const dayStr = e.day ? journalLocalISO(e.day) : "(unknown day)";
 
     const li = document.createElement("li");
     const meta = document.createElement("span");
