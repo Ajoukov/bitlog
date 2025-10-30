@@ -202,6 +202,21 @@ async function loadTimeline(name) {
 }
 
 /* ---------- GitHub-style heatmap ---------- */
+/* Auto-scroll calendar to rightmost side on mobile */
+function scrollCalendarToRight() {
+  const grid = $("#calendar");
+  if (!grid) return;
+  // Check if mobile viewport (matches CSS media query)
+  if (window.innerWidth <= 640) {
+    // Use requestAnimationFrame to ensure DOM is fully rendered
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        grid.scrollLeft = grid.scrollWidth - grid.clientWidth;
+      });
+    });
+  }
+}
+
 /* We render weeks as columns and days (Sun..Sat) as rows. */
 async function loadCalendar(name) {
   const grid = $("#calendar");
@@ -262,6 +277,7 @@ async function loadCalendar(name) {
       cur.setDate(cur.getDate() + 1);
     }
   }
+  scrollCalendarToRight();
 }
 
 /* ---------- global users + recent ---------- */
@@ -412,6 +428,7 @@ async function loadGlobalCalendar() {
       cur.setDate(cur.getDate() + 1);
     }
   }
+  scrollCalendarToRight();
 }
 
 /* ---------- global timeline (all users) ---------- */
