@@ -30,6 +30,14 @@ const JOURNAL_OFFSET_H = 5; // 5-hour cutoff after local midnight
 const JOURNAL_OFFSET_MS = JOURNAL_OFFSET_H * 3600 * 1000;
 // const JOURNAL_OFFSET_MS = 0;
 const pad2 = (n) => String(n).padStart(2, "0");
+function ordinalSuffix(n) {
+  const j = n % 10;
+  const k = n % 100;
+  if (j === 1 && k !== 11) return "st";
+  if (j === 2 && k !== 12) return "nd";
+  if (j === 3 && k !== 13) return "rd";
+  return "th";
+}
 
 /* Map a Date -> "YYYY-MM-DD" using a 5am local cutoff:
    subtract 5h, then format using local Y/M/D. */
@@ -194,6 +202,21 @@ async function loadTimeline(name) {
 }
 
 /* ---------- GitHub-style heatmap ---------- */
+/* Auto-scroll calendar to rightmost side on mobile */
+function scrollCalendarToRight() {
+  const grid = $("#calendar");
+  if (!grid) return;
+  // Check if mobile viewport (matches CSS media query)
+  if (window.innerWidth <= 640) {
+    // Use requestAnimationFrame to ensure DOM is fully rendered
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        grid.scrollLeft = grid.scrollWidth - grid.clientWidth;
+      });
+    });
+  }
+}
+
 /* We render weeks as columns and days (Sun..Sat) as rows. */
 async function loadCalendar(name) {
   const grid = $("#calendar");
@@ -244,12 +267,17 @@ async function loadCalendar(name) {
       const cell = document.createElement("div");
       cell.className = "day";
       if (wc > 0) cell.setAttribute("data-w", String(Math.min(wc, 10)));
-      cell.title = `${key} - ${wc} word${wc === 1 ? "" : "s"}`;
+      const monthName = _d.toLocaleString("en-US", { month: "long" });
+      const dayNum = _d.getDate();
+      const yearNum = _d.getFullYear();
+      const ord = ordinalSuffix(dayNum);
+      cell.title = `${wc} ${wc === 1 ? "word" : "words"} on ${monthName} ${dayNum}${ord} ${yearNum}`;
 
       grid.appendChild(cell);
       cur.setDate(cur.getDate() + 1);
     }
   }
+  scrollCalendarToRight();
 }
 
 /* ---------- global users + recent ---------- */
@@ -329,6 +357,145 @@ async function loadAll() {
   });
 }
 
+/* ---------- global heatmap (all users) ---------- */
+async function loadGlobalCalendar() {
+  const grid = $("#calendar");
+  if (!grid) return;
+  grid.innerHTML = "";
+
+  const CELL = 12;
+  grid.style.display = "grid";
+  grid.style.gridAutoFlow = "column";
+  grid.style.gridTemplateRows = "repeat(7, " + CELL + "px)";
+  grid.style.gridTemplateColumns = "repeat(53, " + CELL + "px)";
+  grid.style.gap = "3px";
+
+  // Pull a large recent window to approximate the last year across all users
+  const r = await fetch(api("/all_recent?limit=5000"));
+  if (!r.ok) return;
+  const j = await r.json();
+  const entries = Array.isArray(j.entries) ? j.entries : [];
+
+  // Build day -> set(users) so each user counts at most once per day
+  const dayToUsers = new Map(); // key: YYYY-MM-DD, value: Set of user names
+  for (const e of entries) {
+    const d = parseTSToDate(e.ts);
+    if (!d) continue;
+    const dayStr = journalLocalISO(d);
+    let set = dayToUsers.get(dayStr);
+    if (!set) {
+      set = new Set();
+      dayToUsers.set(dayStr, set);
+    }
+    if (e.user) set.add(e.user);
+  }
+
+  // Build a fixed 53x7 grid covering the last 371 days ending today
+  const now = new Date();
+  const anchor = new Date(now.getTime() - JOURNAL_OFFSET_MS);
+  const end = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate());
+  const start = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+  start.setDate(start.getDate() - (7 * 53 - 1));
+  const firstSunday = new Date(startOfWeekLocal(end).getTime() - 52 * 7 * 24 * 60 * 60 * 1000);
+
+  let cur = new Date(firstSunday.getFullYear(), firstSunday.getMonth(), firstSunday.getDate());
+  for (let col = 0; col < 53; col++) {
+    for (let row = 0; row < 7; row++) {
+      const _d = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate());
+      const dayStr = journalLocalISO(_d);
+      const contributors = dayToUsers.get(dayStr)?.size || 0;
+
+      const cell = document.createElement("div");
+      cell.className = "day";
+      if (contributors > 0) {
+        // Steeper contrast curve for global view
+        let shade;
+        if (contributors === 1) shade = 2;
+        else if (contributors === 2) shade = 5;
+        else if (contributors === 3) shade = 7;
+        else if (contributors === 4) shade = 9;
+        else shade = 10;
+        cell.setAttribute("data-w", String(shade));
+      }
+
+      const monthName = _d.toLocaleString("en-US", { month: "long" });
+      const dayNum = _d.getDate();
+      const yearNum = _d.getFullYear();
+      const ord = ordinalSuffix(dayNum);
+      cell.title = `${contributors} ${contributors === 1 ? "contributor" : "contributors"} on ${monthName} ${dayNum}${ord} ${yearNum}`;
+
+      grid.appendChild(cell);
+      cur.setDate(cur.getDate() + 1);
+    }
+  }
+  scrollCalendarToRight();
+}
+
+/* ---------- global timeline (all users) ---------- */
+async function loadGlobalTimeline() {
+  ul.innerHTML = "";
+  const r = await fetch(api("/all_recent?limit=5000"));
+  if (!r.ok) return;
+  const j = await r.json();
+
+  let data = Array.isArray(j.entries) ? j.entries : [];
+  const byUser = new Map();
+  for (const e of data) {
+    let user_entries = byUser.get(e.user);
+    if (!user_entries) {
+      user_entries = [];
+      byUser.set(e.user, user_entries);
+    }
+    user_entries.push(e);
+  }
+  const merged = [];
+  for (const userEntries of byUser.values()) {
+    const dayToEntry = entries_to_dayToEntry(userEntries);
+    merged.push(...Object.values(dayToEntry));
+  }
+  const entries = merged.sort((a, b) => b.ts - a.ts);
+
+  entries.forEach((e) => {
+    const dayStr = e.day ? journalLocalISO(e.day) : "(unknown day)";
+    const wc = countWords(e.text);
+
+    const li = document.createElement("li");
+
+    const d = document.createElement("span");
+    d.className = "date";
+    d.appendChild(
+      document.createTextNode(
+        `${dayStr} - ${wc} word${wc === 1 ? "" : "s"} - `
+      )
+    );
+    const name = document.createElement("a");
+    name.textContent = decodeHTML("@" + e.user);
+    name.href = "#";
+    name.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      nameEl.value = e.user;
+      load(e.user);
+    });
+    d.appendChild(name);
+
+    const t = document.createElement("span");
+    t.className = "txt";
+    t.textContent = decodeHTML(e.text || "");
+    t.style.marginLeft = "10px";
+
+    li.appendChild(d);
+    li.appendChild(t);
+    ul.appendChild(li);
+  });
+}
+
+/* ---------- view toggling ---------- */
+async function showEveryone() {
+  whoEl.textContent = decodeHTML("@everyone");
+  await loadGlobalCalendar();
+  await loadGlobalTimeline();
+}
+
 /* ---------- messages & wiring ---------- */
 function msg(s) {
   msgEl.textContent = decodeHTML(s);
@@ -340,11 +507,20 @@ $("#text").addEventListener("keydown", (e) => {
   if (e.key === "Enter") submit();
 });
 $("#name").addEventListener("change", (e) => load(e.target.value.trim()));
+const everyoneBtn = $("#everyone-btn");
+if (everyoneBtn) everyoneBtn.addEventListener("click", (e) => {
+  e.preventDefault();
+  nameEl.value = "";
+  showEveryone();
+});
 document.addEventListener("DOMContentLoaded", async () => {
   const who = new URLSearchParams(location.search).get("u") || "";
   if (who) {
     nameEl.value = who;
     await load(who);
+  }
+  if (!who) {
+    await showEveryone();
   }
   await loadUsers();
   await loadAll();
