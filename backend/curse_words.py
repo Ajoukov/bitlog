@@ -2732,6 +2732,8 @@ curse_words = {
 
 
 def censor(text: str) -> str:
+    text_caps = text
+    text = text.lower()
     from_idx = 0
     changed = True
     while changed:
@@ -2748,12 +2750,13 @@ def censor(text: str) -> str:
 
             if len(cw) > 4 or (char_before == " " and char_after == " "):
                 text = text[:idx] + "***" + text[end:]
-                from_idx = idx + 4
+                text_caps = text_caps[:idx] + "***" + text_caps[end:]
+                from_idx = idx + 1
             else:
                 from_idx = end
 
             changed = True
-    return text
+    return text_caps
 
 
 # def censor(text: str) -> str:

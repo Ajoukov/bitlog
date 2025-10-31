@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# /opt/journal_api/app.py
+# /opt/bitlog/app.py
 
 import os
 import re
