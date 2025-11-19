@@ -44,7 +44,19 @@ main.two-col {
   padding: 0.25rem 0;
   border-bottom: 1px dashed #2a2a38;
 }
-/* #users a { color:var(--accent); text-decoration:none; cursor:pointer; } */
+
+#timeline a {
+  color: var(--accent); 
+  text-decoration: none; 
+  cursor: pointer;
+}
+
+#users a { 
+  color: var(--accent); 
+  text-decoration: none; 
+  cursor: pointer;
+}
+
 #all-timelines a {
   color: var(--accent);
   text-decoration: none;
