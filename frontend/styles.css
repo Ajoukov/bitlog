@@ -57,6 +57,12 @@ main.two-col {
   cursor: pointer;
 }
 
+.meta a { 
+  color: var(--accent); 
+  text-decoration: none; 
+  cursor: pointer;
+}
+
 #all-timelines a {
   color: var(--accent);
   text-decoration: none;
