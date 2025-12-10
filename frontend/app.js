@@ -6,8 +6,8 @@ function decodeHTML(s) {
   return el.value;
 }
 const $ = (sel) => document.querySelector(sel);
-// const api = (path) => `https://bitlog.us/api${path}`;
-const api = (path) => `http://18.118.32.133/api${path}`;
+const api = (path) => `https://bitlog.us/api${path}`;
+// const api = (path) => `http://18.118.32.133/api${path}`;
 
 /* inputs / targets */
 const nameEl = $("#name");
