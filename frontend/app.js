@@ -22,9 +22,19 @@ const allUl = $("#all-timeline"); // latest entries
 const ul = $("#timeline");
 
 /* ---------- word counting (client guard only) ---------- */
+
+// function countWords(s) {
+//   const m = String(s || "").match(/\b[\w’'-]+\b/gu);
+//   return m ? m.length : 0;
+// }
+
+const WORD_RE =
+  /(?:^|[^\p{L}\p{M}\p{N}_])([\p{L}\p{M}\p{N}_]+(?:[’'-][\p{L}\p{M}\p{N}_]+)*)/gu;
+
 function countWords(s) {
-  const m = String(s || "").match(/\b[\w’'-]+\b/gu);
-  return m ? m.length : 0;
+  let n = 0;
+  for (const _ of String(s ?? "").matchAll(WORD_RE)) n++;
+  return n;
 }
 
 /* ---------- 5am-local “journal day” helpers ---------- */
