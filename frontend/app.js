@@ -33,7 +33,7 @@ const WORD_RE =
 
 function countWords(s) {
   let n = 0;
-  for (const _ of String(s ?? "").matchAll(WORD_RE)) n++;
+  for (const _ of htmlToText(String(s ?? "")).matchAll(WORD_RE)) n++;
   return n;
 }
 
@@ -443,6 +443,11 @@ async function loadGlobalCalendar() {
   scrollCalendarToRight();
 }
 
+function htmlToText(s) {
+  const doc = new DOMParser().parseFromString(String(s ?? ""), "text/html");
+  return doc.body.textContent ?? "";
+}
+
 /* ---------- global timeline (all users) ---------- */
 async function loadGlobalTimeline() {
   ul.innerHTML = "";
@@ -470,6 +475,8 @@ async function loadGlobalTimeline() {
   entries.forEach((e) => {
     const dayStr = e.day ? journalLocalISO(e.day) : "(unknown day)";
     const wc = countWords(e.text);
+    // console.log(e.text);
+    // console.log(wc);
 
     const li = document.createElement("li");
 
