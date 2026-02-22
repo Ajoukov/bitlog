@@ -29,6 +29,18 @@ entries_tbl = dynamodb.Table(ENTRIES_TABLE)
 app = Flask(__name__)
 APP_VERSION = "ts-only-epoch-utc-2025-10-18"
 
+# ==================== In-memory cache ====================
+# Keyed by (endpoint, args_tuple). Cleared on any successful write.
+_cache = {}
+
+
+def cache_key():
+    return (request.path, tuple(sorted(request.args.items())))
+
+
+def invalidate_cache():
+    _cache.clear()
+
 # ==================== Text utils ====================
 WORD_RE = re.compile(r"\b[\w’'-]+\b")
 
@@ -237,6 +249,7 @@ def create_or_update_entry():
     except ClientError as e:
         abort(500, e.response["Error"]["Message"])
 
+    invalidate_cache()
     return jsonify({"ok": True, "overwritten": overwritten, "ts": ts_sec})
 
 
@@ -246,12 +259,17 @@ def user_entries(name):
     Returns the user's entries strictly as timestamps + text, sorted ascending by ts.
     Response: { name, entries: [{ts, text}, ...] }
     """
+    ck = cache_key()
+    if ck in _cache:
+        return _cache[ck]
     items = query_user_range(name, scan_forward=True)
     out = [
         {"ts": int(it["ts"]), "text": censor(safe_text(it.get("text", "")))}
         for it in items
     ]
-    return jsonify({"name": name, "entries": out})
+    resp = jsonify({"name": name, "entries": out})
+    _cache[ck] = resp
+    return resp
 
 
 @app.route("/api/calendar/<name>", methods=["GET"])
@@ -261,16 +279,24 @@ def calendar(name):
     The frontend can bucket by any local cutoff (e.g., +5h) and compute word counts.
     Response: { entries: [{ts, text}, ...] }
     """
+    ck = cache_key()
+    if ck in _cache:
+        return _cache[ck]
     items = query_user_range(name, scan_forward=True)
     out = [
         {"ts": int(it["ts"]), "text": censor(safe_text(it.get("text", "")))}
         for it in items
     ]
-    return jsonify({"entries": out})
+    resp = jsonify({"entries": out})
+    _cache[ck] = resp
+    return resp
 
 
 @app.route("/api/users", methods=["GET"])
 def list_users():
+    ck = cache_key()
+    if ck in _cache:
+        return _cache[ck]
     names = []
     kwargs = dict(ProjectionExpression="#n", ExpressionAttributeNames={"#n": "name"})
     while True:
@@ -283,7 +309,9 @@ def list_users():
             break
         kwargs["ExclusiveStartKey"] = resp["LastEvaluatedKey"]
     names.sort(key=str.lower)
-    return jsonify({"users": names})
+    result = jsonify({"users": names})
+    _cache[ck] = result
+    return result
 
 
 @app.route("/api/all_recent", methods=["GET"])
@@ -293,6 +321,10 @@ def all_recent():
     we do a table scan and sort client-side. (If this gets big, add a GSI.)
     Response: { entries: [{user, ts, text}, ...] }
     """
+    ck = cache_key()
+    if ck in _cache:
+        return _cache[ck]
+
     try:
         limit = int(request.args.get("limit", "200"))
     except ValueError:
@@ -322,7 +354,9 @@ def all_recent():
         }
         for it in items
     ]
-    return jsonify({"entries": out})
+    result = jsonify({"entries": out})
+    _cache[ck] = result
+    return result
 
 
 @app.route("/api/health")
