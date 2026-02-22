@@ -1,242 +1,304 @@
-/* :root { --bg:#0b0b0c; --fg:#e7e7ea; --muted:#a0a0ac; --accent:#6ea8fe; --grid:#3a3a3a; } */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
 :root {
-  --bg: #0b0b0c;
-  --fg: #e7e7ea;
-  --muted: #a0a0ac;
-  --accent: #6ea8fe;
-  --grid: #3a3a3a;
+  --bg: #101014;
+  --surface: #18181e;
+  --border: rgba(255, 255, 255, 0.06);
+  --fg: #e4e4e9;
+  --muted: #6e6e7a;
+  --accent: #8b9cf7;
+  --accent-dim: rgba(139, 156, 247, 0.12);
+  --heat: #7c8cf4;
+  --radius: 12px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  font-family: Arial, sans-serif;
-  color: white;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--fg);
+  background: var(--bg);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
-body.two-col {
-  display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 1rem;
-}
+
+/* ── layout ── */
+
 main.two-col {
   display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 1rem;
+  grid-template-columns: 1fr 300px;
+  gap: 1.5rem;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 3rem 2rem;
 }
+
+/* ── cards ── */
+
 #left section,
 #right {
-  background: #111118;
-  border: 1px solid #222230;
-  border-radius: 10px;
-  padding: 1rem;
-}
-#right h3 {
-  margin: 0.2rem 0 0.6rem;
-  font-size: 1.05rem;
-}
-#users,
-#all-timeline {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  max-height: 60vh;
-  overflow: auto;
-}
-#users li {
-  padding: 0.25rem 0;
-  border-bottom: 1px dashed #2a2a38;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
 }
 
-#timeline a {
-  color: var(--accent); 
-  text-decoration: none; 
-  cursor: pointer;
+/* ── header ── */
+
+#left > h1 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  color: var(--fg);
+  margin-bottom: 0.25rem;
 }
 
-#users a { 
-  color: var(--accent); 
-  text-decoration: none; 
-  cursor: pointer;
-}
-
-.meta a { 
-  color: var(--accent); 
-  text-decoration: none; 
-  cursor: pointer;
-}
-
-#all-timelines a {
-  color: var(--accent);
-  text-decoration: none;
-  cursor: pointer;
-}
-a:hover {
-  text-decoration: underline;
-}
-#all-timeline li {
-  padding: 0.4rem 0;
-  border-bottom: 1px dashed #2a2a38;
-}
-#all-timeline .meta {
+#left > p {
+  font-size: 0.75rem;
   color: var(--muted);
-  font-size: 0.9rem;
-}
-#all-timeline .txt {
-  display: block;
-  margin-top: 0.15rem;
-  white-space: pre-wrap;
-  color: white;
-}
-.txt {
-  color: white;
-}
-body {
-  background-color: #1d1d22;
+  margin-bottom: 1.25rem;
+  line-height: 1.5;
 }
 
-/* calendar cell border = gray */
-.day {
-  width: 12px;
-  height: 12px;
-  background: #101018;
-  border: 1px solid var(--grid);
-  border-radius: 2px;
-}
+/* ── form ── */
 
-/* intensity: 1 = 50%, 10 = 100% */
-.day[data-w="1"] {
-  background-color: rgba(49, 169, 230, 0.5);
-}
-.day[data-w="2"] {
-  background-color: rgba(49, 169, 230, 0.556);
-}
-.day[data-w="3"] {
-  background-color: rgba(49, 169, 230, 0.611);
-}
-.day[data-w="4"] {
-  background-color: rgba(49, 169, 230, 0.667);
-}
-.day[data-w="5"] {
-  background-color: rgba(49, 169, 230, 0.722);
-}
-.day[data-w="6"] {
-  background-color: rgba(49, 169, 230, 0.778);
-}
-.day[data-w="7"] {
-  background-color: rgba(49, 169, 230, 0.833);
-}
-.day[data-w="8"] {
-  background-color: rgba(49, 169, 230, 0.889);
-}
-.day[data-w="9"] {
-  background-color: rgba(49, 169, 230, 0.944);
-}
-.day[data-w="10"] {
-  background-color: rgba(49, 169, 230, 1);
-}
-
-/* inline form unchanged from before */
 #inline-form {
   display: flex;
   gap: 0.5rem;
   align-items: center;
 }
+
 #inline-form input {
-  background: #0f0f15;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  background: var(--bg);
   color: var(--fg);
-  border: 1px solid #2a2a38;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 0.5rem 0.6rem;
+  padding: 0.55rem 0.75rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
-#inline-form #name {
-  width: 10rem;
+
+#inline-form input::placeholder {
+  color: var(--muted);
+  opacity: 0.7;
 }
-#inline-form #password {
-  width: 12rem;
+
+#inline-form input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
 }
-/* #inline-form #text { flex:1; min-width:12rem; } */
-#inline-form #text {
-  flex: 1;
-  min-width: 12rem;
-}
-button {
+
+#inline-form #name { width: 9rem; }
+#inline-form #password { width: 11rem; }
+#inline-form #text { flex: 1; min-width: 10rem; }
+
+button, .linklike {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 500;
   background: var(--accent);
-  color: #081120;
+  color: var(--bg);
   border: 0;
   border-radius: 8px;
-  padding: 0.5rem 0.8rem;
-  font-weight: 600;
+  padding: 0.55rem 1rem;
   cursor: pointer;
+  transition: opacity 0.15s;
 }
+
+button:hover, .linklike:hover {
+  opacity: 0.85;
+}
+
+.linklike {
+  background: transparent;
+  color: var(--accent);
+  padding: 0;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
 #msg {
-  margin-top: 0.5rem;
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
   color: var(--muted);
   min-height: 1.2em;
 }
 
+/* ── calendar heatmap ── */
+
+#viz h2 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--fg);
+}
+
+#viz h3 {
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin: 1.25rem 0 0.5rem;
+}
+
 #calendar {
   display: grid;
-  grid-template-columns: repeat(53, 12px);
-  grid-auto-rows: 12px;
+  grid-template-columns: repeat(53, 11px);
+  grid-auto-rows: 11px;
   gap: 3px;
-  padding: 0.5rem;
-  background: #0d0d12;
+  padding: 0.75rem;
+  background: var(--bg);
   border-radius: 8px;
   overflow: auto;
 }
+
+.day {
+  width: 11px;
+  height: 11px;
+  background: rgba(255, 255, 255, 0.03);
+  border: none;
+  border-radius: 3px;
+  transition: background-color 0.15s;
+}
+
+.day[data-w="1"]  { background-color: rgba(124, 140, 244, 0.2); }
+.day[data-w="2"]  { background-color: rgba(124, 140, 244, 0.3); }
+.day[data-w="3"]  { background-color: rgba(124, 140, 244, 0.4); }
+.day[data-w="4"]  { background-color: rgba(124, 140, 244, 0.48); }
+.day[data-w="5"]  { background-color: rgba(124, 140, 244, 0.56); }
+.day[data-w="6"]  { background-color: rgba(124, 140, 244, 0.64); }
+.day[data-w="7"]  { background-color: rgba(124, 140, 244, 0.72); }
+.day[data-w="8"]  { background-color: rgba(124, 140, 244, 0.82); }
+.day[data-w="9"]  { background-color: rgba(124, 140, 244, 0.91); }
+.day[data-w="10"] { background-color: rgba(124, 140, 244, 1); }
+
+/* ── timeline ── */
+
 #timeline {
   list-style: none;
-  padding: 0;
-  margin: 0;
 }
+
 #timeline li {
-  padding: 0.5rem 0.25rem;
-  border-bottom: 1px dashed #222230;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border);
 }
+
+#timeline li:last-child { border-bottom: none; }
+
 #timeline .date {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
   color: var(--muted);
-  font-size: 0.9rem;
 }
+
 #timeline .text {
   display: block;
-  margin-top: 0.2rem;
+  margin-top: 0.15rem;
   white-space: pre-wrap;
+  font-size: 0.9rem;
 }
 
-/* for devices with width <= 640px */
+/* ── sidebar ── */
+
+#right h3 {
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin: 0 0 0.6rem;
+}
+
+#right h3:nth-of-type(2) {
+  margin-top: 1.5rem;
+}
+
+#users,
+#all-timeline {
+  list-style: none;
+  max-height: 55vh;
+  overflow-y: auto;
+}
+
+/* thin custom scrollbar */
+#users::-webkit-scrollbar,
+#all-timeline::-webkit-scrollbar,
+#timeline::-webkit-scrollbar {
+  width: 4px;
+}
+#users::-webkit-scrollbar-thumb,
+#all-timeline::-webkit-scrollbar-thumb,
+#timeline::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+#users li {
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--border);
+}
+#users li:last-child { border-bottom: none; }
+
+#all-timeline li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border);
+}
+#all-timeline li:last-child { border-bottom: none; }
+
+#all-timeline .meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+#all-timeline .txt {
+  display: block;
+  margin-top: 0.1rem;
+  white-space: pre-wrap;
+  color: var(--fg);
+  font-size: 0.88rem;
+}
+
+/* ── links ── */
+
+a,
+#timeline a,
+#users a,
+.meta a,
+#all-timeline a {
+  color: var(--accent);
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+a:hover { opacity: 0.75; }
+
+.txt {
+  color: var(--fg);
+}
+
+/* ── mobile ── */
+
 @media (max-width: 640px) {
-  :root {
-    --gutter: 10px;
-    --stack-gap: 16px;
-    --top-pad: 1px;
-  }
-  html,
-  body {
-    overflow-x: hidden;
-  }
-  * {
-    box-sizing: border-box;
-  }
-
   main.two-col {
-    display: block;
-    padding-inline: var(--gutter);
-    padding-top: var(--top-pad);
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem 1rem;
+    gap: 1rem;
   }
 
-  #left .txt {
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-  }
-
-  #entry-box,
-  #viz,
+  #left section,
   #right {
-    width: 100%;
-    max-width: 100%;
-    margin: 0 0 var(--stack-gap) 0;
-  }
-
-  #right {
-    margin-bottom: 0;
+    padding: 1rem 1.1rem;
   }
 
   #inline-form {
@@ -244,39 +306,31 @@ button {
     grid-template-columns: 1fr;
     gap: 0.5rem;
   }
+
   #inline-form input,
-  #inline-form textarea,
-  #inline-form #text,
-  #inline-form select {
+  #inline-form #text {
     width: 100% !important;
     min-width: 0 !important;
-    padding-block: 0.8rem;
-    line-height: 1.2;
+    padding: 0.7rem 0.75rem;
     font-size: 1rem;
   }
-  #inline-form #name {
-    order: 1;
-  }
-  #inline-form #password {
-    order: 2;
-  }
-  #inline-form #text {
-    order: 3;
-  }
-  #inline-form button {
-    order: 4;
-    justify-self: start;
-    padding-block: 0.75rem;
-  }
+
+  #inline-form #name    { order: 1; }
+  #inline-form #password { order: 2; }
+  #inline-form #text     { order: 3; }
+  #inline-form button    { order: 4; justify-self: start; padding: 0.65rem 1.2rem; }
 
   #users,
   #all-timeline {
     overflow-x: hidden;
   }
+
   #users li,
   #all-timeline li,
   #all-timeline .txt {
     overflow-wrap: anywhere;
     word-break: break-word;
   }
+
+  html, body { overflow-x: hidden; }
 }
