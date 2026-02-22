@@ -161,7 +161,8 @@ button:hover, .linklike:hover {
   padding: 0.75rem;
   background: var(--bg);
   border-radius: 8px;
-  overflow: auto;
+  overflow-x: auto;
+  max-width: 100%;
 }
 
 .month-label {

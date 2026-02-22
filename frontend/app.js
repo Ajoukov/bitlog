@@ -282,19 +282,15 @@ async function loadTimeline(name) {
 }
 
 /* ---------- GitHub-style heatmap ---------- */
-/* Auto-scroll calendar to rightmost side on mobile */
+/* Auto-scroll calendar to rightmost side */
 function scrollCalendarToRight() {
   const grid = $("#calendar");
   if (!grid) return;
-  // Check if mobile viewport (matches CSS media query)
-  if (window.innerWidth <= 640) {
-    // Use requestAnimationFrame to ensure DOM is fully rendered
+  requestAnimationFrame(() => {
     requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        grid.scrollLeft = grid.scrollWidth - grid.clientWidth;
-      });
+      grid.scrollLeft = grid.scrollWidth - grid.clientWidth;
     });
-  }
+  });
 }
 
 /* ---------- shared calendar grid builder ---------- */
