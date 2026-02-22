@@ -44,6 +44,7 @@ main.three-col {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 1.25rem 1.5rem;
+  align-self: start;
 }
 
 #left-sidebar {
@@ -248,11 +249,14 @@ button:hover, .linklike:hover {
   box-shadow: 0 0 0 2px var(--accent-dim);
 }
 
-#users,
-#all-timeline {
+#users {
   list-style: none;
   max-height: 55vh;
   overflow-y: auto;
+}
+
+#all-timeline {
+  list-style: none;
 }
 
 /* thin custom scrollbar */
@@ -292,6 +296,38 @@ button:hover, .linklike:hover {
   white-space: pre-wrap;
   color: var(--fg);
   font-size: 0.88rem;
+}
+
+/* ── streaks ── */
+
+#streaks {
+  list-style: none;
+}
+
+#streaks li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.88rem;
+}
+
+#streaks li:last-child { border-bottom: none; }
+
+#streaks .streak-user {
+  color: var(--fg);
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+#streaks .streak-user:hover { opacity: 0.75; }
+
+#streaks .streak-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--muted);
+  white-space: nowrap;
 }
 
 /* ── links ── */

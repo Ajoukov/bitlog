@@ -1,7 +1,7 @@
 <head>
   <title>bitlog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="styles.css?v=10" />
+  <link rel="stylesheet" href="styles.css?v=11" />
 </head>
 
 <body>
@@ -41,8 +41,14 @@
     </section>
 
     <aside id="right">
-      <h3>latest entries</h3>
-      <ul id="all-timeline"></ul>
+      <div id="right-entries">
+        <h3>latest entries</h3>
+        <ul id="all-timeline"></ul>
+      </div>
+      <div id="right-streaks" style="display:none">
+        <h3>streaks</h3>
+        <ul id="streaks"></ul>
+      </div>
     </aside>
     <div id="user-modal">
       <div id="modal-card">
@@ -51,5 +57,5 @@
       </div>
     </div>
   </main>
-  <script src="app.js?v=10"></script>
+  <script src="app.js?v=11"></script>
 </body>

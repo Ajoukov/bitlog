@@ -19,6 +19,10 @@ const msgEl = $("#msg");
 const whoEl = $("#who");
 const usersUl = $("#users");
 const allUl = $("#all-timeline"); // latest entries
+const rightEntries = $("#right-entries");
+const rightStreaks = $("#right-streaks");
+const streaksUl = $("#streaks");
+const rightPanel = $("#right");
 const ul = $("#timeline");
 const userModal = $("#user-modal");
 const modalUsers = $("#modal-users");
@@ -185,7 +189,7 @@ async function submit() {
     );
 
     textEl.value = "";
-    await Promise.all([load(name), loadAll()]);
+    await load(name);
   } catch (e) {
     msg(String(e.message || e));
   }
@@ -195,7 +199,10 @@ async function submit() {
 async function load(name) {
   if (!name) return;
   whoEl.textContent = decodeHTML(`@${name}`);
-  await Promise.all([loadTimeline(name), loadCalendar(name)]);
+  rightPanel.style.display = "";
+  rightEntries.style.display = "";
+  rightStreaks.style.display = "none";
+  await Promise.all([loadTimeline(name), loadCalendar(name), loadAll()]);
 }
 
 function entries_to_dayToEntry(entries) {
@@ -605,8 +612,80 @@ async function loadGlobalTimeline() {
 /* ---------- view toggling ---------- */
 async function showEveryone() {
   whoEl.textContent = decodeHTML("@everyone");
-  await loadGlobalCalendar();
-  await loadGlobalTimeline();
+  rightEntries.style.display = "none";
+  rightStreaks.style.display = "";
+  rightPanel.style.display = "";
+  await Promise.all([loadGlobalCalendar(), loadGlobalTimeline(), loadStreaks()]);
+}
+
+/* ---------- streak computation ---------- */
+async function loadStreaks() {
+  streaksUl.innerHTML = "";
+  try {
+    const r = await fetch(api("/all_recent?limit=5000"));
+    if (!r.ok) return;
+    const j = await r.json();
+    const entries = Array.isArray(j.entries) ? j.entries : [];
+
+    // Build per-user set of journal days
+    const userDays = new Map(); // user -> Set of "YYYY-MM-DD"
+    for (const e of entries) {
+      const d = parseTSToDate(e.ts - JOURNAL_OFFSET_MS / 1000);
+      if (!d) continue;
+      const day = journalLocalISO(d);
+      let set = userDays.get(e.user);
+      if (!set) { set = new Set(); userDays.set(e.user, set); }
+      set.add(day);
+    }
+
+    // For each user compute current streak (consecutive days ending today or yesterday)
+    const now = new Date();
+    const anchor = new Date(now.getTime() - JOURNAL_OFFSET_MS);
+    const today = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate());
+
+    const streaks = [];
+    for (const [user, days] of userDays) {
+      // Start from today, walk backwards
+      let streak = 0;
+      let d = new Date(today);
+      // Allow starting from today or yesterday (in case they haven't posted today yet)
+      const todayStr = journalLocalISO(d);
+      if (!days.has(todayStr)) {
+        d.setDate(d.getDate() - 1);
+        if (!days.has(journalLocalISO(d))) { streaks.push({ user, streak: 0 }); continue; }
+      }
+      while (days.has(journalLocalISO(d))) {
+        streak++;
+        d.setDate(d.getDate() - 1);
+      }
+      streaks.push({ user, streak });
+    }
+
+    streaks.sort((a, b) => b.streak - a.streak);
+
+    for (const s of streaks) {
+      if (s.streak === 0) continue;
+      const li = document.createElement("li");
+
+      const name = document.createElement("a");
+      name.className = "streak-user";
+      name.textContent = "@" + s.user;
+      name.href = "#";
+      name.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        nameEl.value = s.user;
+        load(s.user);
+      });
+
+      const count = document.createElement("span");
+      count.className = "streak-count";
+      count.textContent = s.streak + " day" + (s.streak === 1 ? "" : "s");
+
+      li.appendChild(name);
+      li.appendChild(count);
+      streaksUl.appendChild(li);
+    }
+  } catch { /* ignore */ }
 }
 
 /* ---------- user-picker modal ---------- */
@@ -682,5 +761,4 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   await fetchUserLastActive();
   await loadUsers();
-  await loadAll();
 });
