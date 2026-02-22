@@ -290,34 +290,68 @@ a:hover { opacity: 0.75; }
   color: var(--fg);
 }
 
-/* ── user chip bar (mobile only) ── */
+/* ── user-picker modal ── */
 
-#user-bar {
+#user-modal {
   display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.6);
+  align-items: center;
+  justify-content: center;
 }
 
-.chip {
-  flex-shrink: 0;
-  font-family: 'Inter', sans-serif;
-  font-size: 0.8rem;
-  font-weight: 500;
+#user-modal.open {
+  display: flex;
+}
+
+#modal-card {
   background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  width: 90vw;
+  max-width: 360px;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#modal-search {
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  background: var(--bg);
   color: var(--fg);
-  border: 1px solid var(--muted);
-  border-radius: 999px;
-  padding: 0.4rem 0.9rem;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 1rem;
+  outline: none;
+}
+
+#modal-search::placeholder {
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+#modal-users {
+  list-style: none;
+  overflow-y: auto;
+  flex: 1;
+}
+
+#modal-users li {
+  padding: 0.7rem 1rem;
   cursor: pointer;
-  transition: border-color 0.2s, color 0.2s, background 0.2s;
-  white-space: nowrap;
+  font-size: 0.95rem;
+  color: var(--fg);
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
 }
 
-.chip:hover {
-  border-color: var(--accent);
-}
+#modal-users li:last-child { border-bottom: none; }
 
-.chip.active {
-  color: var(--accent);
-  border-color: var(--accent);
+#modal-users li:active {
   background: var(--accent-dim);
 }
 
@@ -335,16 +369,22 @@ a:hover { opacity: 0.75; }
     display: none;
   }
 
-  #user-bar {
-    display: flex;
-    gap: 0.5rem;
-    overflow-x: auto;
-    padding: 0.75rem 0;
-    -webkit-overflow-scrolling: touch;
+  #right {
+    display: none;
   }
 
-  #center { order: 1; }
-  #right  { order: 2; }
+  #who {
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-color: var(--muted);
+    text-underline-offset: 3px;
+  }
+
+  #who::after {
+    content: ' \25BE';
+    font-size: 0.75em;
+    color: var(--muted);
+  }
 
   #center section,
   #left-sidebar,
