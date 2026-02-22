@@ -216,7 +216,6 @@ button:hover, .linklike:hover {
 
 /* ── sidebars ── */
 
-#left-sidebar h3,
 #right h3 {
   font-size: 0.8rem;
   font-weight: 500;
@@ -224,6 +223,22 @@ button:hover, .linklike:hover {
   letter-spacing: 0.06em;
   color: var(--muted);
   margin: 0 0 0.6rem;
+}
+
+#everyone-btn {
+  display: block;
+  padding: 0.35rem 0;
+  margin-bottom: 0.3rem;
+  font-size: 0.88rem;
+  color: var(--accent);
+  opacity: 0.7;
+  text-decoration: none;
+  border-bottom: 1px solid var(--border);
+  transition: opacity 0.15s;
+}
+
+#everyone-btn:hover {
+  opacity: 1;
 }
 
 #sidebar-search {
