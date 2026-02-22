@@ -301,7 +301,6 @@ function scrollCalendarToRight() {
 function setupCalendarGrid(grid) {
   const CELL = 12;
   const GAP = 3;
-  const SPACER = 8;
 
   grid.innerHTML = "";
 
@@ -338,26 +337,13 @@ function setupCalendarGrid(grid) {
     }
   }
 
-  // Build grid-template-columns with spacers at month boundaries
-  const monthBoundaryCols = new Set(monthStarts.map((ms) => ms.col));
-  const weekToGridCol = [];
-  const colDefs = [];
-  let gridCol = 1;
-
-  for (let col = 0; col < 53; col++) {
-    if (col > 0 && monthBoundaryCols.has(col)) {
-      colDefs.push(SPACER + "px");
-      gridCol++;
-    }
-    weekToGridCol.push(gridCol);
-    colDefs.push(CELL + "px");
-    gridCol++;
-  }
+  // 1:1 mapping — week index is grid column
+  const weekToGridCol = weeks.map((_, i) => i + 1);
 
   grid.style.display = "grid";
   grid.style.gridAutoFlow = "";
   grid.style.gridTemplateRows = "auto repeat(7, " + CELL + "px)";
-  grid.style.gridTemplateColumns = colDefs.join(" ");
+  grid.style.gridTemplateColumns = "repeat(53, " + CELL + "px)";
   grid.style.gap = GAP + "px";
 
   // Place month labels in row 1
