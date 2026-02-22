@@ -301,13 +301,13 @@ a:hover { opacity: 0.75; }
   }
 
   #left-sidebar {
-    order: 3;
+    order: 2;
     position: static;
     white-space: normal;
   }
 
   #center { order: 1; }
-  #right  { order: 2; }
+  #right  { order: 3; }
 
   #center section,
   #left-sidebar,
