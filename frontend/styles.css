@@ -303,6 +303,7 @@ a:hover { opacity: 0.75; }
   #left-sidebar {
     order: 3;
     position: static;
+    white-space: normal;
   }
 
   #center { order: 1; }
