@@ -279,8 +279,8 @@ button:hover, .linklike:hover {
 #all-timeline::-webkit-scrollbar,
 #timeline::-webkit-scrollbar,
 #calendar::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 8px;
+  height: 8px;
 }
 #users::-webkit-scrollbar-track,
 #all-timeline::-webkit-scrollbar-track,
