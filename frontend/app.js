@@ -39,7 +39,7 @@ function countWords(s) {
 
 /* ---------- interestingness scoring for heatmap ---------- */
 function scoreEntry(text) {
-  const plain = htmlToText(String(text ?? “”));
+  const plain = htmlToText(String(text ?? ""));
   const matches = [...plain.matchAll(WORD_RE)].map(m => m[1]);
   const words = matches.length;
   if (words === 0) return 0;
@@ -77,7 +77,7 @@ function scoreEntry(text) {
   return Math.round(Math.min(total, 10));
 }
 
-/* ---------- 5am-local “journal day” helpers ---------- */
+/* ---------- 5am-local "journal day" helpers ---------- */
 const JOURNAL_OFFSET_H = 5; // 5-hour cutoff after local midnight
 const JOURNAL_OFFSET_MS = JOURNAL_OFFSET_H * 3600 * 1000;
 // const JOURNAL_OFFSET_MS = 0;
