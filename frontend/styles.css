@@ -33,6 +33,8 @@ main.three-col {
   grid-template-columns: min-content 1fr 300px;
   gap: 1.5rem;
   padding: 3rem 2rem;
+  max-width: 1100px;
+  margin: 0 auto;
 }
 
 /* ── cards ── */
@@ -290,6 +292,37 @@ a:hover { opacity: 0.75; }
   color: var(--fg);
 }
 
+/* ── user chip bar (mobile only) ── */
+
+#user-bar {
+  display: none;
+}
+
+.chip {
+  flex-shrink: 0;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background: var(--surface);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+
+.chip:hover {
+  color: var(--fg);
+  border-color: var(--muted);
+}
+
+.chip.active {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
 /* ── mobile ── */
 
 @media (max-width: 640px) {
@@ -301,13 +334,19 @@ a:hover { opacity: 0.75; }
   }
 
   #left-sidebar {
-    order: 2;
-    position: static;
-    white-space: normal;
+    display: none;
+  }
+
+  #user-bar {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding: 0.75rem 0;
+    -webkit-overflow-scrolling: touch;
   }
 
   #center { order: 1; }
-  #right  { order: 3; }
+  #right  { order: 2; }
 
   #center section,
   #left-sidebar,

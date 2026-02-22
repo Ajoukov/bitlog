@@ -20,6 +20,7 @@ const whoEl = $("#who");
 const usersUl = $("#users");
 const allUl = $("#all-timeline"); // latest entries
 const ul = $("#timeline");
+const userBar = $("#user-bar");
 
 /* ---------- word counting (client guard only) ---------- */
 
@@ -184,10 +185,19 @@ async function submit() {
   }
 }
 
+/* ---------- chip active state ---------- */
+function setActiveChip(name) {
+  if (!userBar) return;
+  userBar.querySelectorAll(".chip").forEach((c) => {
+    c.classList.toggle("active", c.dataset.user === (name || ""));
+  });
+}
+
 /* ---------- per-user views ---------- */
 async function load(name) {
   if (!name) return;
   whoEl.textContent = decodeHTML(`@${name}`);
+  setActiveChip(name);
   await Promise.all([loadTimeline(name), loadCalendar(name)]);
 }
 
@@ -335,11 +345,28 @@ async function loadCalendar(name) {
 /* ---------- global users + recent ---------- */
 async function loadUsers() {
   usersUl.innerHTML = "";
+  if (userBar) userBar.innerHTML = "";
   try {
     const r = await fetch(api("/users"));
     if (!r.ok) throw new Error("failed to load users");
     const j = await r.json();
-    (j.users || []).forEach((u) => {
+    const users = j.users || [];
+
+    // Build chip bar: @everyone first
+    if (userBar) {
+      const evChip = document.createElement("button");
+      evChip.className = "chip";
+      evChip.textContent = "@everyone";
+      evChip.dataset.user = "";
+      evChip.addEventListener("click", () => {
+        nameEl.value = "";
+        showEveryone();
+      });
+      userBar.appendChild(evChip);
+    }
+
+    users.forEach((u) => {
+      // Sidebar list
       const li = document.createElement("li");
       const a = document.createElement("a");
       a.textContent = decodeHTML("@" + u);
@@ -351,7 +378,23 @@ async function loadUsers() {
       });
       li.appendChild(a);
       usersUl.appendChild(li);
+
+      // Chip bar
+      if (userBar) {
+        const chip = document.createElement("button");
+        chip.className = "chip";
+        chip.textContent = "@" + u;
+        chip.dataset.user = u;
+        chip.addEventListener("click", () => {
+          nameEl.value = u;
+          load(u);
+        });
+        userBar.appendChild(chip);
+      }
     });
+
+    // Set initial active chip
+    setActiveChip(nameEl.value.trim());
   } catch {
     /* ignore */
   }
@@ -551,6 +594,7 @@ async function loadGlobalTimeline() {
 /* ---------- view toggling ---------- */
 async function showEveryone() {
   whoEl.textContent = decodeHTML("@everyone");
+  setActiveChip("");
   await loadGlobalCalendar();
   await loadGlobalTimeline();
 }
