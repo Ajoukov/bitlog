@@ -225,6 +225,29 @@ button:hover, .linklike:hover {
   margin: 0 0 0.6rem;
 }
 
+#sidebar-search {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8rem;
+  width: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  margin-bottom: 0.5rem;
+  outline: none;
+}
+
+#sidebar-search::placeholder {
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+#sidebar-search:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-dim);
+}
+
 #users,
 #all-timeline {
   list-style: none;

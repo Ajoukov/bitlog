@@ -23,6 +23,10 @@ const ul = $("#timeline");
 const userModal = $("#user-modal");
 const modalUsers = $("#modal-users");
 const modalSearch = $("#modal-search");
+const sidebarSearch = $("#sidebar-search");
+
+/* user -> last active epoch (built before loadUsers) */
+let userLastActive = new Map();
 
 /* ---------- word counting (client guard only) ---------- */
 
@@ -336,6 +340,20 @@ async function loadCalendar(name) {
 }
 
 /* ---------- global users + recent ---------- */
+async function fetchUserLastActive() {
+  userLastActive = new Map();
+  try {
+    const r = await fetch(api("/all_recent?limit=5000"));
+    if (!r.ok) return;
+    const j = await r.json();
+    const entries = Array.isArray(j.entries) ? j.entries : [];
+    for (const e of entries) {
+      const prev = userLastActive.get(e.user) || 0;
+      if (e.ts > prev) userLastActive.set(e.user, e.ts);
+    }
+  } catch { /* ignore */ }
+}
+
 async function loadUsers() {
   usersUl.innerHTML = "";
   modalUsers.innerHTML = "";
@@ -343,7 +361,9 @@ async function loadUsers() {
     const r = await fetch(api("/users"));
     if (!r.ok) throw new Error("failed to load users");
     const j = await r.json();
-    const users = j.users || [];
+    const users = (j.users || []).sort((a, b) =>
+      (userLastActive.get(b) || 0) - (userLastActive.get(a) || 0)
+    );
 
     // Modal: @everyone first
     const evLi = document.createElement("li");
@@ -382,6 +402,13 @@ async function loadUsers() {
   } catch {
     /* ignore */
   }
+}
+
+function filterSidebarUsers(q) {
+  const term = q.toLowerCase();
+  usersUl.querySelectorAll("li").forEach((li) => {
+    li.style.display = li.textContent.toLowerCase().includes(term) ? "" : "none";
+  });
 }
 
 async function loadAll() {
@@ -617,6 +644,11 @@ modalSearch.addEventListener("input", (e) => {
   filterModalUsers(e.target.value);
 });
 
+/* desktop sidebar search */
+sidebarSearch.addEventListener("input", (e) => {
+  filterSidebarUsers(e.target.value);
+});
+
 /* #who tap opens modal on mobile */
 whoEl.addEventListener("click", () => {
   if (isMobile()) openModal();
@@ -648,6 +680,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (!who) {
     await showEveryone();
   }
+  await fetchUserLastActive();
   await loadUsers();
   await loadAll();
 });
