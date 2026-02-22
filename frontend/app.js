@@ -84,8 +84,8 @@ function scoreEntry(text) {
   return Math.round(Math.min(total, 10));
 }
 
-/* ---------- 5am-local "journal day" helpers ---------- */
-const JOURNAL_OFFSET_H = 5; // 5-hour cutoff after local midnight
+/* ---------- noon-local "journal day" helpers ---------- */
+const JOURNAL_OFFSET_H = 12; // noon cutoff: before 12pm counts as previous day
 const JOURNAL_OFFSET_MS = JOURNAL_OFFSET_H * 3600 * 1000;
 // const JOURNAL_OFFSET_MS = 0;
 const pad2 = (n) => String(n).padStart(2, "0");
@@ -98,8 +98,8 @@ function ordinalSuffix(n) {
   return "th";
 }
 
-/* Map a Date -> "YYYY-MM-DD" using a 5am local cutoff:
-   subtract 5h, then format using local Y/M/D. */
+/* Map a Date -> "YYYY-MM-DD" using a noon local cutoff:
+   subtract 12h, then format using local Y/M/D. */
 function journalLocalISO(d) {
   // const adj = new Date(d.getTime() - JOURNAL_OFFSET_MS);
   const adj = new Date(d.getTime());
