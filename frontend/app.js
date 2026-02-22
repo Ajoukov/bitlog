@@ -297,51 +297,94 @@ function scrollCalendarToRight() {
   }
 }
 
-/* We render weeks as columns and days (Sun..Sat) as rows. */
-async function loadCalendar(name) {
-  const grid = $("#calendar");
+/* ---------- shared calendar grid builder ---------- */
+function setupCalendarGrid(grid) {
+  const CELL = 12;
+  const GAP = 3;
+  const SPACER = 8;
+
   grid.innerHTML = "";
 
-  // Force a GitHub-like grid layout regardless of page CSS
-  const CELL = 12; // px; tweak if your stylesheet sizes .day differently
-  grid.style.display = "grid";
-  grid.style.gridAutoFlow = "column"; // fill down first, then next column
-  grid.style.gridTemplateRows = "repeat(7, " + CELL + "px)";
-  grid.style.gridTemplateColumns = "repeat(53, " + CELL + "px)";
-  grid.style.gap = "3px";
-
-  // Anchor end as "today’s journal day" (5h cutoff), then build 53 weeks (371 days)
   const now = new Date();
   const anchor = new Date(now.getTime() - JOURNAL_OFFSET_MS);
-  // const end = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate()); // local midnight of journal day
-  const end = new Date(
-    anchor.getFullYear(),
-    anchor.getMonth(),
-    anchor.getDate()
-  ); // local midnight of journal day
-  const start = new Date(end.getFullYear(), end.getMonth(), end.getDate());
-  start.setDate(start.getDate() - (7 * 53 - 1));
-
-  // Snap start to Sunday in local time (so the grid starts at a full week)
-  // const firstSunday = startOfWeekLocal(start);
+  const end = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate());
   const firstSunday = new Date(
     startOfWeekLocal(end).getTime() - 52 * 7 * 24 * 60 * 60 * 1000
   );
 
-  // Fetch timestamped entries: { entries: [{ts, text}, ...] }
+  // Pre-compute all 53 weeks of dates
+  const weeks = [];
+  let cur = new Date(firstSunday);
+  for (let col = 0; col < 53; col++) {
+    const days = [];
+    for (let row = 0; row < 7; row++) {
+      days.push(new Date(cur.getFullYear(), cur.getMonth(), cur.getDate()));
+      cur.setDate(cur.getDate() + 1);
+    }
+    weeks.push(days);
+  }
+
+  // Detect month boundaries (where Sunday’s month changes)
+  const monthStarts = [];
+  let prevMonth = -1;
+  for (let col = 0; col < weeks.length; col++) {
+    const m = weeks[col][0].getMonth();
+    if (m !== prevMonth) {
+      monthStarts.push({
+        col,
+        label: weeks[col][0].toLocaleString("en-US", { month: "short" }),
+      });
+      prevMonth = m;
+    }
+  }
+
+  // Build grid-template-columns with spacers at month boundaries
+  const monthBoundaryCols = new Set(monthStarts.map((ms) => ms.col));
+  const weekToGridCol = [];
+  const colDefs = [];
+  let gridCol = 1;
+
+  for (let col = 0; col < 53; col++) {
+    if (col > 0 && monthBoundaryCols.has(col)) {
+      colDefs.push(SPACER + "px");
+      gridCol++;
+    }
+    weekToGridCol.push(gridCol);
+    colDefs.push(CELL + "px");
+    gridCol++;
+  }
+
+  grid.style.display = "grid";
+  grid.style.gridAutoFlow = "";
+  grid.style.gridTemplateRows = "auto repeat(7, " + CELL + "px)";
+  grid.style.gridTemplateColumns = colDefs.join(" ");
+  grid.style.gap = GAP + "px";
+
+  // Place month labels in row 1
+  for (const ms of monthStarts) {
+    const lbl = document.createElement("span");
+    lbl.className = "month-label";
+    lbl.textContent = ms.label;
+    lbl.style.gridRow = "1";
+    lbl.style.gridColumn = String(weekToGridCol[ms.col]);
+    grid.appendChild(lbl);
+  }
+
+  return { weeks, weekToGridCol };
+}
+
+/* We render weeks as columns and days (Sun..Sat) as rows. */
+async function loadCalendar(name) {
+  const grid = $("#calendar");
+  const { weeks, weekToGridCol } = setupCalendarGrid(grid);
+
   const dayToEntry = await fetch_calendar(name);
 
-  // Build cells column-by-column (weeks), row-by-row (days)
-  let cur = new Date(
-    firstSunday.getFullYear(),
-    firstSunday.getMonth(),
-    firstSunday.getDate()
-  );
-  for (let col = 0; col < 53; col++) {
+  for (let col = 0; col < weeks.length; col++) {
     for (let row = 0; row < 7; row++) {
-      const _d = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate());
-      const date = journalLocalISO(_d); // local 5h day key
-      const key = parseTSToDate(date); // local 5h day key
+      const _d = weeks[col][row];
+      const date = journalLocalISO(_d);
+      const key = parseTSToDate(date);
       const score = dayToEntry[key] ? scoreEntry(dayToEntry[key].text) : 0;
 
       const cell = document.createElement("div");
@@ -352,9 +395,10 @@ async function loadCalendar(name) {
       const yearNum = _d.getFullYear();
       const ord = ordinalSuffix(dayNum);
       cell.title = `score ${score}/10 on ${monthName} ${dayNum}${ord} ${yearNum}`;
+      cell.style.gridRow = String(row + 2);
+      cell.style.gridColumn = String(weekToGridCol[col]);
 
       grid.appendChild(cell);
-      cur.setDate(cur.getDate() + 1);
     }
   }
   scrollCalendarToRight();
@@ -482,52 +526,31 @@ async function loadAll() {
 async function loadGlobalCalendar() {
   const grid = $("#calendar");
   if (!grid) return;
-  grid.innerHTML = "";
+  const { weeks, weekToGridCol } = setupCalendarGrid(grid);
 
-  const CELL = 12;
-  grid.style.display = "grid";
-  grid.style.gridAutoFlow = "column";
-  grid.style.gridTemplateRows = "repeat(7, " + CELL + "px)";
-  grid.style.gridTemplateColumns = "repeat(53, " + CELL + "px)";
-  grid.style.gap = "3px";
-
-  // Pull a large recent window to approximate the last year across all users
   const j = await cachedGet(api("/all_recent?limit=5000"));
   const entries = Array.isArray(j.entries) ? j.entries : [];
 
   // Build day -> set(users) so each user counts at most once per day
-  const dayToUsers = new Map(); // key: YYYY-MM-DD, value: Set of user names
+  const dayToUsers = new Map();
   for (const e of entries) {
     const d = parseTSToDate(e.ts);
     if (!d) continue;
     const dayStr = journalLocalISO(d);
     let set = dayToUsers.get(dayStr);
-    if (!set) {
-      set = new Set();
-      dayToUsers.set(dayStr, set);
-    }
+    if (!set) { set = new Set(); dayToUsers.set(dayStr, set); }
     if (e.user) set.add(e.user);
   }
 
-  // Build a fixed 53x7 grid covering the last 371 days ending today
-  const now = new Date();
-  const anchor = new Date(now.getTime() - JOURNAL_OFFSET_MS);
-  const end = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate());
-  const start = new Date(end.getFullYear(), end.getMonth(), end.getDate());
-  start.setDate(start.getDate() - (7 * 53 - 1));
-  const firstSunday = new Date(startOfWeekLocal(end).getTime() - 52 * 7 * 24 * 60 * 60 * 1000);
-
-  let cur = new Date(firstSunday.getFullYear(), firstSunday.getMonth(), firstSunday.getDate());
-  for (let col = 0; col < 53; col++) {
+  for (let col = 0; col < weeks.length; col++) {
     for (let row = 0; row < 7; row++) {
-      const _d = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate());
+      const _d = weeks[col][row];
       const dayStr = journalLocalISO(_d);
       const contributors = dayToUsers.get(dayStr)?.size || 0;
 
       const cell = document.createElement("div");
       cell.className = "day";
       if (contributors > 0) {
-        // Steeper contrast curve for global view
         let shade;
         if (contributors === 1) shade = 2;
         else if (contributors === 2) shade = 5;
@@ -542,9 +565,10 @@ async function loadGlobalCalendar() {
       const yearNum = _d.getFullYear();
       const ord = ordinalSuffix(dayNum);
       cell.title = `${contributors} ${contributors === 1 ? "contributor" : "contributors"} on ${monthName} ${dayNum}${ord} ${yearNum}`;
+      cell.style.gridRow = String(row + 2);
+      cell.style.gridColumn = String(weekToGridCol[col]);
 
       grid.appendChild(cell);
-      cur.setDate(cur.getDate() + 1);
     }
   }
   scrollCalendarToRight();

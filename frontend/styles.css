@@ -158,14 +158,18 @@ button:hover, .linklike:hover {
 }
 
 #calendar {
-  display: grid;
-  grid-template-columns: repeat(53, 11px);
-  grid-auto-rows: 11px;
-  gap: 3px;
   padding: 0.75rem;
   background: var(--bg);
   border-radius: 8px;
   overflow: auto;
+}
+
+.month-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.65rem;
+  color: var(--muted);
+  white-space: nowrap;
+  line-height: 1;
 }
 
 .day {
