@@ -326,7 +326,7 @@ button:hover, .linklike:hover {
 #streaks li:last-child { border-bottom: none; }
 
 #streaks .streak-user {
-  color: var(--fg);
+  color: var(--accent);
   cursor: pointer;
   transition: opacity 0.15s;
 }
