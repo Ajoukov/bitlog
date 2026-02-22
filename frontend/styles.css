@@ -28,18 +28,19 @@ body {
 
 /* ── layout ── */
 
-main.two-col {
+main.three-col {
   display: grid;
-  grid-template-columns: 1fr 300px;
+  grid-template-columns: 180px 1fr 300px;
   gap: 1.5rem;
-  max-width: 960px;
+  max-width: 1160px;
   margin: 0 auto;
   padding: 3rem 2rem;
 }
 
 /* ── cards ── */
 
-#left section,
+#center section,
+#left-sidebar,
 #right {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -47,9 +48,15 @@ main.two-col {
   padding: 1.25rem 1.5rem;
 }
 
+#left-sidebar {
+  align-self: start;
+  position: sticky;
+  top: 2rem;
+}
+
 /* ── header ── */
 
-#left > h1 {
+#center > h1 {
   font-size: 1.1rem;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -58,7 +65,7 @@ main.two-col {
   margin-bottom: 0.25rem;
 }
 
-#left > p {
+#center > p {
   font-size: 0.75rem;
   color: var(--muted);
   margin-bottom: 1.25rem;
@@ -206,8 +213,9 @@ button:hover, .linklike:hover {
   font-size: 0.9rem;
 }
 
-/* ── sidebar ── */
+/* ── sidebars ── */
 
+#left-sidebar h3,
 #right h3 {
   font-size: 0.8rem;
   font-weight: 500;
@@ -215,10 +223,6 @@ button:hover, .linklike:hover {
   letter-spacing: 0.06em;
   color: var(--muted);
   margin: 0 0 0.6rem;
-}
-
-#right h3:nth-of-type(2) {
-  margin-top: 1.5rem;
 }
 
 #users,
@@ -289,14 +293,23 @@ a:hover { opacity: 0.75; }
 /* ── mobile ── */
 
 @media (max-width: 640px) {
-  main.two-col {
+  main.three-col {
     display: flex;
     flex-direction: column;
     padding: 1.5rem 1rem;
     gap: 1rem;
   }
 
-  #left section,
+  #left-sidebar {
+    order: 3;
+    position: static;
+  }
+
+  #center { order: 1; }
+  #right  { order: 2; }
+
+  #center section,
+  #left-sidebar,
   #right {
     padding: 1rem 1.1rem;
   }

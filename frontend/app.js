@@ -37,6 +37,46 @@ function countWords(s) {
   return n;
 }
 
+/* ---------- interestingness scoring for heatmap ---------- */
+function scoreEntry(text) {
+  const plain = htmlToText(String(text ?? “”));
+  const matches = [...plain.matchAll(WORD_RE)].map(m => m[1]);
+  const words = matches.length;
+  if (words === 0) return 0;
+
+  // 1. Word count (0–2 pts)
+  const wcScore = Math.min(words / 5, 2);
+
+  // 2. Average word length (0–2.5 pts)
+  const avgLen = matches.reduce((s, w) => s + w.length, 0) / words;
+  const avgScore = Math.min(Math.max((avgLen - 3) / 2, 0), 2.5);
+
+  // 3. Unique word ratio (0–2 pts)
+  const unique = new Set(matches.map(w => w.toLowerCase()));
+  const uniqScore = (unique.size / words) * 2;
+
+  // 4. Event density (0–2 pts) — sentence-like segments
+  const segments = plain.split(/[.;!?]+/).filter(s => s.trim().length > 0).length;
+  const densityScore = Math.min(Math.max((segments - 1) / 3, 0), 2);
+
+  // 5. Specificity (0–1.5 pts) — caps not at sentence start + digits in words
+  let specCount = 0;
+  const sentences = plain.split(/[.;!?]+/).filter(s => s.trim().length > 0);
+  const sentenceStartWords = new Set();
+  for (const sent of sentences) {
+    const first = [...sent.trim().matchAll(WORD_RE)];
+    if (first.length > 0) sentenceStartWords.add(first[0][1]);
+  }
+  for (const w of matches) {
+    if (/\d/.test(w)) { specCount++; continue; }
+    if (/^\p{Lu}/u.test(w) && !sentenceStartWords.has(w)) specCount++;
+  }
+  const specScore = Math.min(specCount * 0.3, 1.5);
+
+  const total = wcScore + avgScore + uniqScore + densityScore + specScore;
+  return Math.round(Math.min(total, 10));
+}
+
 /* ---------- 5am-local “journal day” helpers ---------- */
 const JOURNAL_OFFSET_H = 5; // 5-hour cutoff after local midnight
 const JOURNAL_OFFSET_MS = JOURNAL_OFFSET_H * 3600 * 1000;
@@ -274,16 +314,16 @@ async function loadCalendar(name) {
       const _d = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate());
       const date = journalLocalISO(_d); // local 5h day key
       const key = parseTSToDate(date); // local 5h day key
-      const wc = dayToEntry[key] ? countWords(dayToEntry[key].text) : 0;
+      const score = dayToEntry[key] ? scoreEntry(dayToEntry[key].text) : 0;
 
       const cell = document.createElement("div");
       cell.className = "day";
-      if (wc > 0) cell.setAttribute("data-w", String(Math.min(wc, 10)));
+      if (score > 0) cell.setAttribute("data-w", String(score));
       const monthName = _d.toLocaleString("en-US", { month: "long" });
       const dayNum = _d.getDate();
       const yearNum = _d.getFullYear();
       const ord = ordinalSuffix(dayNum);
-      cell.title = `${wc} ${wc === 1 ? "word" : "words"} on ${monthName} ${dayNum}${ord} ${yearNum}`;
+      cell.title = `score ${score}/10 on ${monthName} ${dayNum}${ord} ${yearNum}`;
 
       grid.appendChild(cell);
       cur.setDate(cur.getDate() + 1);
