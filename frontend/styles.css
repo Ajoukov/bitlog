@@ -32,9 +32,7 @@ main.three-col {
   display: grid;
   grid-template-columns: min-content 1fr 300px;
   gap: 1.5rem;
-  padding: 3rem 2rem;
-  max-width: 1100px;
-  margin: 0 auto;
+  padding: 3rem calc(max(2rem, (100vw - 1100px) / 2));
 }
 
 /* ── cards ── */
@@ -304,23 +302,23 @@ a:hover { opacity: 0.75; }
   font-size: 0.8rem;
   font-weight: 500;
   background: var(--surface);
-  color: var(--muted);
-  border: 1px solid var(--border);
+  color: var(--fg);
+  border: 1px solid var(--muted);
   border-radius: 999px;
-  padding: 0.35rem 0.85rem;
+  padding: 0.4rem 0.9rem;
   cursor: pointer;
-  transition: border-color 0.2s, color 0.2s;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
   white-space: nowrap;
 }
 
 .chip:hover {
-  color: var(--fg);
-  border-color: var(--muted);
+  border-color: var(--accent);
 }
 
 .chip.active {
   color: var(--accent);
   border-color: var(--accent);
+  background: var(--accent-dim);
 }
 
 /* ── mobile ── */
