@@ -277,12 +277,21 @@ button:hover, .linklike:hover {
 /* thin custom scrollbar */
 #users::-webkit-scrollbar,
 #all-timeline::-webkit-scrollbar,
-#timeline::-webkit-scrollbar {
+#timeline::-webkit-scrollbar,
+#calendar::-webkit-scrollbar {
   width: 4px;
+  height: 4px;
+}
+#users::-webkit-scrollbar-track,
+#all-timeline::-webkit-scrollbar-track,
+#timeline::-webkit-scrollbar-track,
+#calendar::-webkit-scrollbar-track {
+  background: transparent;
 }
 #users::-webkit-scrollbar-thumb,
 #all-timeline::-webkit-scrollbar-thumb,
-#timeline::-webkit-scrollbar-thumb {
+#timeline::-webkit-scrollbar-thumb,
+#calendar::-webkit-scrollbar-thumb {
   background: var(--border);
   border-radius: 4px;
 }
