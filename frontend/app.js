@@ -11,6 +11,22 @@ const $ = (sel) => document.querySelector(sel);
 // const api = (path) => `https://18.118.32.133/api${path}`;
 const api = (path) => `/api${path}`;
 
+/* -------- client-side GET cache -------- */
+const _getCache = new Map();
+
+async function cachedGet(url) {
+  if (_getCache.has(url)) return _getCache.get(url);
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`GET ${url} failed: ${r.status}`);
+  const j = await r.json();
+  _getCache.set(url, j);
+  return j;
+}
+
+function invalidateClientCache() {
+  _getCache.clear();
+}
+
 /* inputs / targets */
 const nameEl = $("#name");
 const passEl = $("#password");
@@ -179,6 +195,8 @@ async function submit() {
     if (!res.ok || body.ok === false)
       throw new Error(body.message || res.statusText);
 
+    invalidateClientCache();
+
     // body.ts is epoch seconds; format to journal day and show local word count
     const tsDate = parseTSToDate(body.ts);
     const dayStr = tsDate ? journalLocalISO(tsDate) : "(unknown day)";
@@ -222,15 +240,11 @@ function entries_to_dayToEntry(entries) {
 async function fetch_calendar(name) {
   let entries = [];
   try {
-    const res = await fetch(api(`/calendar/${encodeURIComponent(name)}`));
-    if (res.ok) {
-      const j = await res.json();
-      if (Array.isArray(j.entries)) entries = j.entries;
-    }
+    const j = await cachedGet(api(`/calendar/${encodeURIComponent(name)}`));
+    if (Array.isArray(j.entries)) entries = j.entries;
   } catch {
     /* ignore; show empty grid */
   }
-  // console.log(entries);
   return entries_to_dayToEntry(entries);
 }
 
@@ -350,9 +364,7 @@ async function loadCalendar(name) {
 async function fetchUserLastActive() {
   userLastActive = new Map();
   try {
-    const r = await fetch(api("/all_recent?limit=5000"));
-    if (!r.ok) return;
-    const j = await r.json();
+    const j = await cachedGet(api("/all_recent?limit=5000"));
     const entries = Array.isArray(j.entries) ? j.entries : [];
     for (const e of entries) {
       const prev = userLastActive.get(e.user) || 0;
@@ -365,9 +377,7 @@ async function loadUsers() {
   usersUl.innerHTML = "";
   modalUsers.innerHTML = "";
   try {
-    const r = await fetch(api("/users"));
-    if (!r.ok) throw new Error("failed to load users");
-    const j = await r.json();
+    const j = await cachedGet(api("/users"));
     const users = (j.users || []).sort((a, b) =>
       (userLastActive.get(b) || 0) - (userLastActive.get(a) || 0)
     );
@@ -420,9 +430,7 @@ function filterSidebarUsers(q) {
 
 async function loadAll() {
   allUl.innerHTML = "";
-  const r = await fetch(api("/all_recent?limit=200"));
-  if (!r.ok) throw new Error("failed to load recent");
-  const j = await r.json();
+  const j = await cachedGet(api("/all_recent?limit=200"));
 
   let data = Array.isArray(j.entries) ? j.entries : [];
   const byUser = new Map();
@@ -484,9 +492,7 @@ async function loadGlobalCalendar() {
   grid.style.gap = "3px";
 
   // Pull a large recent window to approximate the last year across all users
-  const r = await fetch(api("/all_recent?limit=5000"));
-  if (!r.ok) return;
-  const j = await r.json();
+  const j = await cachedGet(api("/all_recent?limit=5000"));
   const entries = Array.isArray(j.entries) ? j.entries : [];
 
   // Build day -> set(users) so each user counts at most once per day
@@ -552,9 +558,7 @@ function htmlToText(s) {
 /* ---------- global timeline (all users) ---------- */
 async function loadGlobalTimeline() {
   ul.innerHTML = "";
-  const r = await fetch(api("/all_recent?limit=5000"));
-  if (!r.ok) return;
-  const j = await r.json();
+  const j = await cachedGet(api("/all_recent?limit=5000"));
 
   let data = Array.isArray(j.entries) ? j.entries : [];
   const byUser = new Map();
@@ -622,9 +626,7 @@ async function showEveryone() {
 async function loadStreaks() {
   streaksUl.innerHTML = "";
   try {
-    const r = await fetch(api("/all_recent?limit=5000"));
-    if (!r.ok) return;
-    const j = await r.json();
+    const j = await cachedGet(api("/all_recent?limit=5000"));
     const entries = Array.isArray(j.entries) ? j.entries : [];
 
     // Build per-user set of journal days
