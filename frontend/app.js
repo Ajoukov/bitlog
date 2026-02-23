@@ -549,7 +549,7 @@ async function loadGlobalCalendar() {
   // Build day -> set(users) so each user counts at most once per day
   const dayToUsers = new Map();
   for (const e of entries) {
-    const d = parseTSToDate(e.ts);
+    const d = parseTSToDate(e.ts - JOURNAL_OFFSET_MS / 1000);
     if (!d) continue;
     const dayStr = journalLocalISO(d);
     let set = dayToUsers.get(dayStr);
