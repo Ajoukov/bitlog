@@ -176,6 +176,7 @@ def put_item(user: str, ts_sec: int, text: str):
 @app.after_request
 def mark(resp):
     resp.headers["X-Journal-Version"] = APP_VERSION
+    resp.headers["Cache-Control"] = "no-store"
     return resp
 
 

@@ -11,20 +11,10 @@ const $ = (sel) => document.querySelector(sel);
 // const api = (path) => `https://18.118.32.133/api${path}`;
 const api = (path) => `/api${path}`;
 
-/* -------- client-side GET cache -------- */
-const _getCache = new Map();
-
 async function cachedGet(url) {
-  if (_getCache.has(url)) return _getCache.get(url);
   const r = await fetch(url);
   if (!r.ok) throw new Error(`GET ${url} failed: ${r.status}`);
-  const j = await r.json();
-  _getCache.set(url, j);
-  return j;
-}
-
-function invalidateClientCache() {
-  _getCache.clear();
+  return r.json();
 }
 
 /* inputs / targets */
@@ -194,8 +184,6 @@ async function submit() {
       : { ok: false, message: (await res.text()).slice(0, 200) };
     if (!res.ok || body.ok === false)
       throw new Error(body.message || res.statusText);
-
-    invalidateClientCache();
 
     // body.ts is epoch seconds; format to journal day and show local word count
     const tsDate = parseTSToDate(body.ts);
