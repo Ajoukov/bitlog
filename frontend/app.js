@@ -11,6 +11,24 @@ const $ = (sel) => document.querySelector(sel);
 // const api = (path) => `https://18.118.32.133/api${path}`;
 const api = (path) => `/api${path}`;
 
+async function loadSavedLogin() {
+  try {
+    const r = await fetch(api("/saved_login"));
+
+    if (!r.ok)
+      return;
+
+    const j = await r.json();
+
+    if (typeof j.name === "string")
+      nameEl.value = j.name;
+
+    if (typeof j.password === "string")
+      passEl.value = j.password;
+  } catch {
+  }
+}
+
 async function cachedGet(url) {
   const r = await fetch(url);
   if (!r.ok) throw new Error(`GET ${url} failed: ${r.status}`);
@@ -401,7 +419,6 @@ async function loadUsers() {
       a.href = "#";
       a.addEventListener("click", (ev) => {
         ev.preventDefault();
-        nameEl.value = u;
         load(u);
       });
       li.appendChild(a);
@@ -411,7 +428,6 @@ async function loadUsers() {
       const mLi = document.createElement("li");
       mLi.textContent = "@" + u;
       mLi.addEventListener("click", () => {
-        nameEl.value = u;
         load(u);
         closeModal();
       });
@@ -462,7 +478,6 @@ async function loadAll() {
     name.href = "#";
     name.addEventListener("click", (ev) => {
       ev.preventDefault();
-      nameEl.value = e.user;
       load(e.user);
     });
 
@@ -573,7 +588,6 @@ async function loadGlobalTimeline() {
     name.href = "#";
     name.addEventListener("click", (ev) => {
       ev.preventDefault();
-      nameEl.value = e.user;
       load(e.user);
     });
     d.appendChild(name);
@@ -641,7 +655,6 @@ async function loadStreaks() {
       name.href = "#";
       name.addEventListener("click", (ev) => {
         ev.preventDefault();
-        nameEl.value = s.user;
         load(s.user);
       });
 
@@ -720,9 +733,10 @@ if (everyoneBtn) everyoneBtn.addEventListener("click", (e) => {
 });
 document.addEventListener("DOMContentLoaded", async () => {
   updateEntryDateLabels();
+  await loadSavedLogin();
+
   const who = new URLSearchParams(location.search).get("u") || "";
   if (who) {
-    nameEl.value = who;
     await load(who);
   }
   if (!who) {

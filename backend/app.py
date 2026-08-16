@@ -9,10 +9,13 @@ from datetime import datetime, timezone
 
 from curse_words import censor
 
-from flask import Flask, request, jsonify, abort
+from flask import Flask, request, jsonify, abort, make_response
 import boto3
 from botocore.exceptions import ClientError
 from boto3.dynamodb.conditions import Key
+
+import json
+from cryptography.fernet import Fernet, InvalidToken
 
 # ==================== Config ====================
 USERS_TABLE = os.getenv("USERS_TABLE", "journal_users")
@@ -31,6 +34,15 @@ APP_VERSION = "date-epoch-day-2026-08-16"
 DAY_SECONDS = 86400
 MAX_DATE_AGE_SECONDS = 84 * 60 * 60
 MAX_DATE_FUTURE_SECONDS = 14 * 60 * 60
+
+LOGIN_COOKIE_NAME = "bitlog_login"
+LOGIN_COOKIE_MAX_AGE = 14 * 24 * 60 * 60
+
+login_cookie_key = os.environ.get("LOGIN_COOKIE_KEY")
+if not login_cookie_key:
+    raise RuntimeError("LOGIN_COOKIE_KEY not set")
+
+login_cipher = Fernet(login_cookie_key.encode())
 # ==================== In-memory cache ====================
 # Keyed by (endpoint, args_tuple). Cleared on any successful write.
 _cache = {}
@@ -146,6 +158,46 @@ def json_err(err):
     return jsonify({"ok": False, "message": msg}), getattr(err, "code", 500)
 
 
+# ==================== Cookie ====================
+def encode_saved_login(name: str, password: str) -> str:
+    data = json.dumps(
+        {
+            "name": name,
+            "password": password,
+        },
+        separators=(",", ":"),
+    ).encode()
+
+    return login_cipher.encrypt(data).decode()
+
+
+def decode_saved_login(token: str):
+    try:
+        data = login_cipher.decrypt(token.encode())
+        login = json.loads(data.decode())
+
+        name = login.get("name")
+        password = login.get("password")
+
+        if not isinstance(name, str) or not isinstance(password, str):
+            return None
+
+        return name, password
+    except (InvalidToken, ValueError, TypeError, json.JSONDecodeError):
+        return None
+
+
+def set_saved_login_cookie(resp, name: str, password: str):
+    resp.set_cookie(
+        LOGIN_COOKIE_NAME,
+        encode_saved_login(name, password),
+        max_age=LOGIN_COOKIE_MAX_AGE,
+        secure=True,
+        httponly=True,
+        samesite="Lax",
+        path="/",
+    )
+
 # ==================== API ====================
 @app.route("/api/entry", methods=["POST"])
 def create_entry():
@@ -199,7 +251,38 @@ def create_entry():
         abort(500, e.response["Error"]["Message"])
 
     invalidate_cache()
-    return jsonify({"ok": True, "ts": ts_sec, "date": date_day})
+
+    resp = make_response(jsonify({
+        "ok": True,
+        "ts": ts_sec,
+        "date": date_day,
+    }))
+
+    set_saved_login_cookie(resp, name, pwd)
+
+    return resp
+
+@app.route("/api/saved_login", methods=["GET"])
+def saved_login():
+    token = request.cookies.get(LOGIN_COOKIE_NAME)
+    if not token:
+        return jsonify({"ok": False}), 404
+
+    login = decode_saved_login(token)
+    if login is None:
+        return jsonify({"ok": False}), 404
+
+    name, password = login
+
+    user = get_user(name)
+    if user is None or not verify_password(user, password):
+        return jsonify({"ok": False}), 404
+
+    return jsonify({
+        "ok": True,
+        "name": name,
+        "password": password,
+    })
 
 @app.route("/api/user/<name>", methods=["GET"])
 def user_entries(name):
