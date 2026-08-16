@@ -1,7 +1,7 @@
 <head>
   <title>bitlog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="styles.css?v=25" />
+  <link rel="stylesheet" href="styles.css?v=26" />
 </head>
 
 <body>
@@ -28,6 +28,16 @@
           />
           <input id="text" maxlength="120" placeholder="10 words max" />
           <button id="submit">post</button>
+        </div>
+        <div id="entry-date">
+          <label>
+            <input type="radio" name="entry-date" value="0" checked />
+            <span id="today-date"></span>
+          </label>
+          <label>
+            <input type="radio" name="entry-date" value="1" />
+            <span id="yesterday-date"></span>
+          </label>
         </div>
         <div id="msg"></div>
       </section>
@@ -57,5 +67,5 @@
       </div>
     </div>
   </main>
-  <script src="app.js?v=25"></script>
+  <script src="app.js?v=26"></script>
 </body>

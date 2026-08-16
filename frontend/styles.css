@@ -132,6 +132,25 @@ button:hover, .linklike:hover {
   font-size: 0.95rem;
 }
 
+#entry-date {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.4rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+#entry-date label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  cursor: pointer;
+}
+
+#entry-date input {
+  accent-color: var(--accent);
+}
+
 #msg {
   margin-top: 0.4rem;
   font-size: 0.8rem;

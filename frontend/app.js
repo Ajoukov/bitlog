@@ -93,11 +93,8 @@ function scoreEntry(text) {
   const total = wcScore + avgScore + uniqScore + densityScore + specScore;
   return Math.round(Math.min(total, 10));
 }
-
-/* ---------- noon-local "journal day" helpers ---------- */
-const JOURNAL_OFFSET_H = 12; // noon cutoff: before 12pm counts as previous day
-const JOURNAL_OFFSET_MS = JOURNAL_OFFSET_H * 3600 * 1000;
-// const JOURNAL_OFFSET_MS = 0;
+/* ---------- date helpers ---------- */
+const DAY_MS = 86400000;
 const pad2 = (n) => String(n).padStart(2, "0");
 function ordinalSuffix(n) {
   const j = n % 10;
@@ -107,49 +104,21 @@ function ordinalSuffix(n) {
   if (j === 3 && k !== 13) return "rd";
   return "th";
 }
-
-/* Map a Date -> "YYYY-MM-DD" using a noon local cutoff:
-   subtract 12h, then format using local Y/M/D. */
-function journalLocalISO(d) {
-  // const adj = new Date(d.getTime() - JOURNAL_OFFSET_MS);
-  const adj = new Date(d.getTime());
-  // return `${adj.getFullYear()}-${pad2(adj.getMonth()+1)}-${pad2(adj.getDate())}`;
-  return `${adj.getUTCFullYear()}-${pad2(adj.getUTCMonth() + 1)}-${pad2(
-    adj.getUTCDate()
-  )}`;
+function localDateToUnixDay(d) {
+  return Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / DAY_MS);
 }
-
-/* Parse backend timestamps:
-   - numeric epoch seconds (preferred)
-   - numeric string epoch seconds
-   - ISO-8601 string (with Z or offset)
-   Returns Date or null. */
-function parseTSToDate(ts) {
-  if (ts === null || ts === undefined) return null;
-
-  // numeric
-  if (typeof ts === "number") {
-    if (!Number.isFinite(ts)) return null;
-    const local = new Date(ts * 1000);
-    // console.log((local.getYear() + 1900) + " " + local.getMonth() + " " + local.getDate());
-    return new Date(
-      Date.UTC(local.getYear() + 1900, local.getMonth(), local.getDate())
-    );
-  }
-  // decimal-as-string or plain int string
-  if (typeof ts === "string") {
-    const s = ts.trim();
-    // numeric string?
-    if (/^[+-]?\d+(\.\d+)?$/.test(s)) {
-      const n = Number(s);
-      if (!Number.isFinite(n)) return null;
-      return new Date(Math.trunc(n) * 1000);
-    }
-    // ISO
-    const d = new Date(s.replace("Z", "+00:00"));
-    return isNaN(d) ? null : d;
-  }
-  return null;
+function localUnixDay(daysAgo = 0) {
+  const d = new Date();
+  d.setDate(d.getDate() - daysAgo);
+  return localDateToUnixDay(d);
+}
+function unixDayToISO(day) {
+  const d = new Date(day * DAY_MS);
+  return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
+}
+function updateEntryDateLabels() {
+  $("#today-date").textContent = `today (${unixDayToISO(localUnixDay(0))})`;
+  $("#yesterday-date").textContent = `yesterday (${unixDayToISO(localUnixDay(1))})`;
 }
 
 /* Start-of-week (Sunday) in local time */
@@ -162,6 +131,7 @@ function startOfWeekLocal(d) {
 
 /* ---------- submit ---------- */
 async function submit() {
+  updateEntryDateLabels();
   const name = nameEl.value.trim();
   const password = passEl.value;
   const text = textEl.value.trim();
@@ -170,13 +140,13 @@ async function submit() {
   const w = countWords(text);
   if (w === 0) return msg("entry text required");
   if (w > 10) return msg("max 10 words");
-
+  const daysAgo = Number($('input[name="entry-date"]:checked').value);
+  const date = localUnixDay(daysAgo);
   try {
     const res = await fetch(api("/entry"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      // send no ts; server will fill current UTC epoch seconds (that’s fine)
-      body: JSON.stringify({ name, password, text }),
+      body: JSON.stringify({ name, password, text, date }),
     });
     const ct = res.headers.get("content-type") || "";
     const body = ct.includes("application/json")
@@ -184,15 +154,8 @@ async function submit() {
       : { ok: false, message: (await res.text()).slice(0, 200) };
     if (!res.ok || body.ok === false)
       throw new Error(body.message || res.statusText);
-
-    // body.ts is epoch seconds; format to journal day and show local word count
-    const tsDate = parseTSToDate(body.ts);
-    const dayStr = tsDate ? journalLocalISO(tsDate) : "(unknown day)";
-    msg(
-      `saved for ${dayStr} (${w} word${w === 1 ? "" : "s"})${
-        body.overwritten ? " [overwritten]" : ""
-      }`
-    );
+    const dayStr = unixDayToISO(body.date);
+    msg(`saved for ${dayStr} (${w} word${w === 1 ? "" : "s"})`);
 
     textEl.value = "";
     await load(name);
@@ -212,15 +175,12 @@ async function load(name) {
 }
 
 function entries_to_dayToEntry(entries) {
-  // Aggregate by journal day (local +5h) -> max word count that day
+
   const dayToEntry = Object.create(null);
   for (const e of entries) {
-    // console.log(e.ts - JOURNAL_OFFSET_MS/1000);
-    const key = parseTSToDate(e.ts - JOURNAL_OFFSET_MS / 1000);
-    // console.log(journalLocalISO(key));
-    if (!key) continue;
+    const key = e.date;
     if (!dayToEntry[key] || e.ts > dayToEntry[key].ts)
-      dayToEntry[key] = { text: e.text, day: key, ts: e.ts, user: e.user };
+      dayToEntry[key] = e;
   }
   return dayToEntry;
 }
@@ -245,11 +205,7 @@ async function loadTimeline(name) {
   // console.log(entries);
 
   entries.forEach((e) => {
-    const dObj = e.day;
-    // console.log(dObj);
-    // console.log(journalLocalISO(dObj));
-    // const dayStr = dObj ? journalLocalISO(dObj) : "(unknown day)";
-    const dayStr = dObj ? journalLocalISO(dObj) : "(unknown day)";
+    const dayStr = unixDayToISO(e.date);
     const wc = countWords(e.text);
 
     const li = document.createElement("li");
@@ -290,12 +246,9 @@ function setupCalendarGrid(grid) {
   grid.innerHTML = "";
 
   const now = new Date();
-  const anchor = new Date(now.getTime() - JOURNAL_OFFSET_MS);
-  const end = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate());
-  const firstSunday = new Date(
-    startOfWeekLocal(end).getTime() - 52 * 7 * 24 * 60 * 60 * 1000
-  );
-
+  const end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const firstSunday = startOfWeekLocal(end);
+  firstSunday.setDate(firstSunday.getDate() - 52 * 7);
   // Build all 371 days
   const allDays = [];
   let cur = new Date(firstSunday);
@@ -386,8 +339,7 @@ async function loadCalendar(name) {
 
   for (let c = 0; c < columns.length; c++) {
     for (const { row, date } of columns[c].days) {
-      const dateStr = journalLocalISO(date);
-      const key = parseTSToDate(dateStr);
+      const key = localDateToUnixDay(date);
       const score = dayToEntry[key] ? scoreEntry(dayToEntry[key].text) : 0;
 
       const cell = document.createElement("div");
@@ -497,7 +449,7 @@ async function loadAll() {
   const entries = merged.sort((a, b) => b.ts - a.ts);
   console.log(entries);
   entries.forEach((e) => {
-    const dayStr = e.day ? journalLocalISO(e.day) : "(unknown day)";
+    const dayStr = unixDayToISO(e.date);
 
     const li = document.createElement("li");
     const meta = document.createElement("span");
@@ -537,18 +489,14 @@ async function loadGlobalCalendar() {
   // Build day -> set(users) so each user counts at most once per day
   const dayToUsers = new Map();
   for (const e of entries) {
-    const d = parseTSToDate(e.ts - JOURNAL_OFFSET_MS / 1000);
-    if (!d) continue;
-    const dayStr = journalLocalISO(d);
-    let set = dayToUsers.get(dayStr);
-    if (!set) { set = new Set(); dayToUsers.set(dayStr, set); }
+    let set = dayToUsers.get(e.date);
+    if (!set) { set = new Set(); dayToUsers.set(e.date, set); }
     if (e.user) set.add(e.user);
   }
 
   for (let c = 0; c < columns.length; c++) {
     for (const { row, date } of columns[c].days) {
-      const dayStr = journalLocalISO(date);
-      const contributors = dayToUsers.get(dayStr)?.size || 0;
+      const contributors = dayToUsers.get(localDateToUnixDay(date))?.size || 0;
 
       const cell = document.createElement("div");
       cell.className = "day";
@@ -604,7 +552,7 @@ async function loadGlobalTimeline() {
   const entries = merged.sort((a, b) => b.ts - a.ts);
 
   entries.forEach((e) => {
-    const dayStr = e.day ? journalLocalISO(e.day) : "(unknown day)";
+    const dayStr = unixDayToISO(e.date);
     const wc = countWords(e.text);
     // console.log(e.text);
     // console.log(wc);
@@ -654,37 +602,27 @@ async function loadStreaks() {
   try {
     const j = await cachedGet(api("/all_recent?limit=5000"));
     const entries = Array.isArray(j.entries) ? j.entries : [];
-
-    // Build per-user set of journal days
-    const userDays = new Map(); // user -> Set of "YYYY-MM-DD"
+    const userDays = new Map();
     for (const e of entries) {
-      const d = parseTSToDate(e.ts - JOURNAL_OFFSET_MS / 1000);
-      if (!d) continue;
-      const day = journalLocalISO(d);
       let set = userDays.get(e.user);
       if (!set) { set = new Set(); userDays.set(e.user, set); }
-      set.add(day);
+      set.add(e.date);
     }
 
-    // For each user compute current streak (consecutive days ending today or yesterday)
-    const now = new Date();
-    const anchor = new Date(now.getTime() - JOURNAL_OFFSET_MS);
-    const today = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate());
+    const today = localUnixDay(0);
 
     const streaks = [];
     for (const [user, days] of userDays) {
-      // Start from today, walk backwards
       let streak = 0;
-      let d = new Date(today);
+      let day = today;
       // Allow starting from today or yesterday (in case they haven't posted today yet)
-      const todayStr = journalLocalISO(d);
-      if (!days.has(todayStr)) {
-        d.setDate(d.getDate() - 1);
-        if (!days.has(journalLocalISO(d))) { streaks.push({ user, streak: 0 }); continue; }
+      if (!days.has(day)) {
+        day--;
+        if (!days.has(day)) { streaks.push({ user, streak: 0 }); continue; }
       }
-      while (days.has(journalLocalISO(d))) {
+      while (days.has(day)) {
         streak++;
-        d.setDate(d.getDate() - 1);
+        day--;
       }
       streaks.push({ user, streak });
     }
@@ -779,6 +717,7 @@ if (everyoneBtn) everyoneBtn.addEventListener("click", (e) => {
   showEveryone();
 });
 document.addEventListener("DOMContentLoaded", async () => {
+  updateEntryDateLabels();
   const who = new URLSearchParams(location.search).get("u") || "";
   if (who) {
     nameEl.value = who;
