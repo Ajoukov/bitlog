@@ -107,8 +107,10 @@ function ordinalSuffix(n) {
 function localDateToUnixDay(d) {
   return Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / DAY_MS);
 }
+const JOURNAL_OFFSET_MS = 18 * 60 * 60 * 1000;
+
 function localUnixDay(daysAgo = 0) {
-  const d = new Date();
+  const d = new Date(Date.now() - JOURNAL_OFFSET_MS);
   d.setDate(d.getDate() - daysAgo);
   return localDateToUnixDay(d);
 }

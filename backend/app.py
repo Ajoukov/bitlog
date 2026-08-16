@@ -29,7 +29,7 @@ entries_tbl = dynamodb.Table(ENTRIES_TABLE)
 app = Flask(__name__)
 APP_VERSION = "date-epoch-day-2026-08-16"
 DAY_SECONDS = 86400
-MAX_DATE_AGE_SECONDS = 60 * 60 * 60
+MAX_DATE_AGE_SECONDS = 84 * 60 * 60
 MAX_DATE_FUTURE_SECONDS = 14 * 60 * 60
 # ==================== In-memory cache ====================
 # Keyed by (endpoint, args_tuple). Cleared on any successful write.
