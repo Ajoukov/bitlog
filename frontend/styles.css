@@ -81,7 +81,8 @@ main.three-col {
   align-items: center;
 }
 
-#inline-form input {
+#inline-form input,
+#inline-form textarea {
   font-family: 'Inter', sans-serif;
   font-size: 0.85rem;
   background: var(--bg);
@@ -92,12 +93,14 @@ main.three-col {
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-#inline-form input::placeholder {
+#inline-form input::placeholder,
+#inline-form textarea::placeholder {
   color: var(--muted);
   opacity: 0.7;
 }
 
-#inline-form input:focus {
+#inline-form input:focus,
+#inline-form textarea:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-dim);
@@ -105,7 +108,11 @@ main.three-col {
 
 #inline-form #name { width: 9rem; }
 #inline-form #password { width: 11rem; }
-#inline-form #text { flex: 1; min-width: 10rem; }
+#inline-form #text {
+  flex: 1;
+  min-width: 10rem;
+  resize: none;
+}
 
 button, .linklike {
   font-family: 'Inter', sans-serif;
@@ -500,6 +507,10 @@ a:hover { opacity: 0.75; }
     display: grid !important;
     grid-template-columns: 1fr;
     gap: 0.5rem;
+  }
+
+  #inline-form #text {
+    overflow-y: hidden;
   }
 
   #inline-form input,

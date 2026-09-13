@@ -178,6 +178,7 @@ async function submit() {
     msg(`saved for ${dayStr} (${w} word${w === 1 ? "" : "s"})`);
 
     textEl.value = "";
+    resizeEntryText();
     await load(name);
   } catch (e) {
     msg(String(e.message || e));
@@ -674,6 +675,15 @@ function isMobile() {
   return window.innerWidth <= 640;
 }
 
+function resizeEntryText() {
+  if (!isMobile()) {
+    textEl.style.height = "";
+    return;
+  }
+  textEl.style.height = "auto";
+  textEl.style.height = `${textEl.scrollHeight}px`;
+}
+
 function openModal() {
   modalSearch.value = "";
   filterModalUsers("");
@@ -722,8 +732,13 @@ function msg(s) {
 /* wire up */
 $("#submit").addEventListener("click", submit);
 $("#text").addEventListener("keydown", (e) => {
-  if (e.key === "Enter") submit();
+  if (e.key === "Enter") {
+    e.preventDefault();
+    submit();
+  }
 });
+textEl.addEventListener("input", resizeEntryText);
+window.addEventListener("resize", resizeEntryText);
 $("#name").addEventListener("change", (e) => load(e.target.value.trim()));
 const everyoneBtn = $("#everyone-btn");
 if (everyoneBtn) everyoneBtn.addEventListener("click", (e) => {
@@ -733,6 +748,7 @@ if (everyoneBtn) everyoneBtn.addEventListener("click", (e) => {
 });
 document.addEventListener("DOMContentLoaded", async () => {
   updateEntryDateLabels();
+  resizeEntryText();
   await loadSavedLogin();
 
   const who = new URLSearchParams(location.search).get("u") || "";
