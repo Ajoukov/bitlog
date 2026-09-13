@@ -219,8 +219,9 @@ def create_entry():
         abort(400, "name required")
     if not text:
         abort(400, "text required")
-    if count_words(text) > 10:
-        abort(400, "text exceeds 10 words")
+    words = count_words(text)
+    if words > 10:
+        abort(400, f"max 10 words (have {words})")
     if isinstance(date_day, bool) or not isinstance(date_day, int):
         abort(400, "date must be an integer Unix day")
 

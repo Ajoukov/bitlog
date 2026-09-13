@@ -159,7 +159,7 @@ async function submit() {
   if (!name) return msg("name required");
   const w = countWords(text);
   if (w === 0) return msg("entry text required");
-  if (w > 10) return msg("max 10 words");
+  if (w > 10) return msg(`max 10 words (have ${w})`);
   const daysAgo = Number($('input[name="entry-date"]:checked').value);
   const date = localUnixDay(daysAgo);
   try {
