@@ -40,6 +40,7 @@ const nameEl = $("#name");
 const passEl = $("#password");
 const textEl = $("#text");
 const msgEl = $("#msg");
+const wordCountEl = $("#word-count");
 const whoEl = $("#who");
 const usersUl = $("#users");
 const allUl = $("#all-timeline"); // latest entries
@@ -70,6 +71,13 @@ function countWords(s) {
   let n = 0;
   for (const _ of htmlToText(String(s ?? "")).matchAll(WORD_RE)) n++;
   return n;
+}
+
+/* live counter under the textarea */
+function updateWordCount() {
+  const w = countWords(textEl.value);
+  wordCountEl.textContent = `${w}/10 word${w === 1 ? "" : "s"}`;
+  wordCountEl.classList.toggle("over", w > 10);
 }
 
 /* ---------- interestingness scoring for heatmap ---------- */
@@ -179,6 +187,7 @@ async function submit() {
 
     textEl.value = "";
     resizeEntryText();
+    updateWordCount();
     await load(name);
   } catch (e) {
     msg(String(e.message || e));
@@ -738,6 +747,7 @@ $("#text").addEventListener("keydown", (e) => {
   }
 });
 textEl.addEventListener("input", resizeEntryText);
+textEl.addEventListener("input", updateWordCount);
 window.addEventListener("resize", resizeEntryText);
 $("#name").addEventListener("change", (e) => load(e.target.value.trim()));
 const everyoneBtn = $("#everyone-btn");
@@ -749,6 +759,7 @@ if (everyoneBtn) everyoneBtn.addEventListener("click", (e) => {
 document.addEventListener("DOMContentLoaded", async () => {
   updateEntryDateLabels();
   resizeEntryText();
+  updateWordCount();
   await loadSavedLogin();
 
   const who = new URLSearchParams(location.search).get("u") || "";
