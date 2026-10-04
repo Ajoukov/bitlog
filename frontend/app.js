@@ -697,16 +697,19 @@ async function loadStreaks() {
     }
 
     const today = localUnixDay(0);
+    const yesterday = localUnixDay(1);
+    // The form lets you backfill "yesterday", so a streak is only dead once
+    // posting for yesterday right now (in this browser's journal day) could
+    // no longer reconnect it. That means the streak's most recent day may be
+    // as old as the day before yesterday and still count.
+    const oldestRecoverableHead = yesterday - 1;
 
     const streaks = [];
     for (const [user, days] of userDays) {
-      let streak = 0;
       let day = today;
-      // Allow starting from today or yesterday (in case they haven't posted today yet)
-      if (!days.has(day)) {
-        day--;
-        if (!days.has(day)) { streaks.push({ user, streak: 0 }); continue; }
-      }
+      while (day >= oldestRecoverableHead && !days.has(day)) day--;
+      if (day < oldestRecoverableHead) { streaks.push({ user, streak: 0 }); continue; }
+      let streak = 0;
       while (days.has(day)) {
         streak++;
         day--;
