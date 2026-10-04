@@ -176,6 +176,7 @@ async function submit() {
       throw new Error(body.message || res.statusText);
     const dayStr = unixDayToISO(body.date);
     msg(`saved for ${dayStr} (${w} word${w === 1 ? "" : "s"})`);
+    fireworks();
 
     textEl.value = "";
     resizeEntryText();
@@ -183,6 +184,75 @@ async function submit() {
   } catch (e) {
     msg(String(e.message || e));
   }
+}
+
+/* ---------- fireworks on a successful post ---------- */
+function fireworks() {
+  if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+
+  const W = window.innerWidth;
+  const H = window.innerHeight;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const canvas = document.createElement("canvas");
+  canvas.id = "fireworks";
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+
+  const accent =
+    getComputedStyle(document.body).getPropertyValue("--accent").trim() || "#8b9cf7";
+  const colors = [accent, "#f7b267", "#f4845f", "#c77dff", "#7fd1ff", "#ffffff"];
+
+  // Launch from around the entry box so it reads as "your post went up".
+  const box = $("#entry-box")?.getBoundingClientRect();
+  const cx = box ? box.left + box.width / 2 : W / 2;
+  const cy = box ? Math.max(box.top, 40) : H / 3;
+
+  const particles = [];
+  function burst(x, y, n) {
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const speed = 1.5 + Math.random() * 3.5;
+      particles.push({
+        x, y,
+        vx: Math.cos(a) * speed,
+        vy: Math.sin(a) * speed - 1,
+        r: 1.2 + Math.random() * 1.6,
+        life: 1,
+        decay: 0.012 + Math.random() * 0.014,
+        color: colors[i % colors.length],
+      });
+    }
+  }
+  burst(cx, cy, 55);
+  setTimeout(() => burst(cx - Math.min(W * 0.18, 160), cy + 30, 40), 160);
+  setTimeout(() => burst(cx + Math.min(W * 0.18, 160), cy + 20, 40), 320);
+
+  const start = performance.now();
+  function frame(t) {
+    ctx.clearRect(0, 0, W, H);
+    let alive = false;
+    for (const p of particles) {
+      if (p.life <= 0) continue;
+      alive = true;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.05;      // gravity
+      p.vx *= 0.985;     // drag
+      p.vy *= 0.985;
+      p.life -= p.decay;
+      ctx.globalAlpha = Math.max(p.life, 0);
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    if (alive || t - start < 400) requestAnimationFrame(frame);
+    else canvas.remove();
+  }
+  requestAnimationFrame(frame);
 }
 
 /* ---------- per-user views ---------- */
