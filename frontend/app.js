@@ -255,6 +255,11 @@ function fireworks() {
   requestAnimationFrame(frame);
 }
 
+/* newest journal day first; within a day, most recent post first */
+function byDateThenTs(a, b) {
+  return (b.date - a.date) || (b.ts - a.ts);
+}
+
 /* ---------- per-user views ---------- */
 async function load(name) {
   if (!name) return;
@@ -292,7 +297,7 @@ async function loadTimeline(name) {
   ul.innerHTML = "";
   const dayToEntry = await fetch_calendar(name);
   // console.log(dayToEntry);
-  const entries = Object.values(dayToEntry).sort((a, b) => b.ts - a.ts);
+  const entries = Object.values(dayToEntry).sort(byDateThenTs);
   // console.log(entries);
 
   entries.forEach((e) => {
@@ -535,7 +540,7 @@ async function loadAll() {
     const dayToEntry = entries_to_dayToEntry(userEntries);
     merged.push(...Object.values(dayToEntry));
   }
-  const entries = merged.sort((a, b) => b.ts - a.ts);
+  const entries = merged.sort(byDateThenTs);
   console.log(entries);
   entries.forEach((e) => {
     const dayStr = unixDayToISO(e.date);
@@ -637,7 +642,7 @@ async function loadGlobalTimeline() {
     const dayToEntry = entries_to_dayToEntry(userEntries);
     merged.push(...Object.values(dayToEntry));
   }
-  const entries = merged.sort((a, b) => b.ts - a.ts);
+  const entries = merged.sort(byDateThenTs);
 
   entries.forEach((e) => {
     const dayStr = unixDayToISO(e.date);
