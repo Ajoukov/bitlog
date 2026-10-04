@@ -390,7 +390,42 @@ async function fetchUserLastActive() {
       const prev = userLastActive.get(e.user) || 0;
       if (e.ts > prev) userLastActive.set(e.user, e.ts);
     }
+    maybeCelebrateAnniversary(entries);
   } catch { /* ignore */ }
+}
+
+/* ---------- one-year celebration ---------- */
+/* One line per day of birthday week (day 365 through 372 since the first post). */
+const ANNIVERSARY_LINES = [
+  "happy birthday, bitlog. one year of ten-word days.",
+  "365 days ago somebody typed the first ten words. still going.",
+  "a year of tiny entries adds up to a pretty big diary.",
+  "one lap around the sun, logged ten words at a time.",
+  "the heatmap is a full year wide now. look how far it scrolls.",
+  "a year in, and still nothing is encrypted. cheers.",
+  "day 371. the streaks are getting serious.",
+  "last day of birthday week. regular programming resumes tomorrow.",
+];
+
+function maybeCelebrateAnniversary(entries) {
+  if (!entries.length) return;
+  let firstDay = Infinity;
+  const users = new Set();
+  for (const e of entries) {
+    if (e.date < firstDay) firstDay = e.date;
+    if (e.user) users.add(e.user);
+  }
+  const daysSince = localUnixDay(0) - firstDay;
+  if (daysSince < 365 || daysSince > 372) return;
+
+  document.body.classList.add("anniversary");
+  document.title = "bitlog 🎂";
+
+  const line = ANNIVERSARY_LINES[Math.min(daysSince - 365, ANNIVERSARY_LINES.length - 1)];
+  const banner = $("#banner");
+  banner.textContent =
+    `🎂 ${line} ${entries.length} entries from ${users.size} people since ${unixDayToISO(firstDay)}.`;
+  banner.hidden = false;
 }
 
 async function loadUsers() {
