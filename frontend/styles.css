@@ -216,6 +216,19 @@ button:hover, .linklike:hover {
   accent-color: var(--accent);
 }
 
+#word-count {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--muted);
+  white-space: nowrap;
+  transition: color 0.15s;
+}
+
+#word-count.over {
+  color: #f08c8c;
+}
+
 #msg {
   margin-top: 0.4rem;
   font-size: 0.8rem;
