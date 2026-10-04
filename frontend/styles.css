@@ -401,6 +401,17 @@ a:hover { opacity: 0.75; }
   color: var(--fg);
 }
 
+/* ── fireworks overlay (created by app.js after a post) ── */
+
+#fireworks {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2000;
+}
+
 /* ── user-picker modal ── */
 
 #user-modal {
