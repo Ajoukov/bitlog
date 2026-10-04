@@ -73,6 +73,64 @@ main.three-col {
   line-height: 1.5;
 }
 
+/* ── one-year celebration (body.anniversary is set by app.js) ── */
+
+#banner {
+  font-size: 0.8rem;
+  color: var(--fg);
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+body.anniversary {
+  --bg: #120f17;
+  --surface: #1a1522;
+  --border: rgba(247, 178, 103, 0.14);
+  --accent: #f7b267;
+  --accent-dim: rgba(247, 178, 103, 0.16);
+  --heat: #f7b267;
+}
+
+body.anniversary #center > h1 {
+  letter-spacing: 0.08em;
+  background: linear-gradient(90deg, #f7b267, #f4845f, #c77dff, #7fd1ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+body.anniversary #center > h1::after {
+  content: ' 🎂';
+}
+
+/* gradient hairline border around the entry box, radius-safe */
+body.anniversary #entry-box {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--surface), var(--surface)) padding-box,
+    linear-gradient(120deg, #f7b267, #f4845f, #c77dff, #7fd1ff) border-box;
+}
+
+/* confetti heatmap: cells cycle through four hues, intensity still from data-w */
+body.anniversary .day[data-w] {
+  background-color: hsl(var(--h, 32) 90% 70% / var(--a, 1));
+}
+body.anniversary .day:nth-child(4n+1) { --h: 32; }
+body.anniversary .day:nth-child(4n+2) { --h: 12; }
+body.anniversary .day:nth-child(4n+3) { --h: 275; }
+body.anniversary .day:nth-child(4n)   { --h: 200; }
+
+body.anniversary .day[data-w="1"]  { --a: 0.22; }
+body.anniversary .day[data-w="2"]  { --a: 0.32; }
+body.anniversary .day[data-w="3"]  { --a: 0.42; }
+body.anniversary .day[data-w="4"]  { --a: 0.5; }
+body.anniversary .day[data-w="5"]  { --a: 0.58; }
+body.anniversary .day[data-w="6"]  { --a: 0.66; }
+body.anniversary .day[data-w="7"]  { --a: 0.74; }
+body.anniversary .day[data-w="8"]  { --a: 0.84; }
+body.anniversary .day[data-w="9"]  { --a: 0.92; }
+body.anniversary .day[data-w="10"] { --a: 1; }
+
 /* ── form ── */
 
 #inline-form {
