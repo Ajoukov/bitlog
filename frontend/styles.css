@@ -608,6 +608,15 @@ a:hover { opacity: 0.75; }
   #inline-form #text     { order: 3; }
   #inline-form button    { order: 4; justify-self: start; padding: 0.65rem 1.2rem; }
 
+  #entry-date {
+    flex-wrap: wrap;
+  }
+
+  #entry-date label {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
   #users,
   #all-timeline {
     overflow-x: hidden;
