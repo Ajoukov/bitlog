@@ -91,7 +91,8 @@ body.anniversary {
   --heat: #f7b267;
 }
 
-body.anniversary #center > h1 {
+body.anniversary #center > h1 > span {
+  display: inline-block;
   letter-spacing: 0.08em;
   background: linear-gradient(90deg, #f7b267, #f4845f, #c77dff, #7fd1ff);
   -webkit-background-clip: text;
