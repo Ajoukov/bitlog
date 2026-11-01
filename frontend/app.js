@@ -30,7 +30,11 @@ async function loadSavedLogin() {
 }
 
 async function cachedGet(url) {
-  const r = await fetch(url);
+  const zone = window.BitlogAccount.timeZone();
+  const headers = window.BitlogAccount.authHeaders();
+  if (window.BitlogAccount.signedIn() && zone)
+    headers["X-Bitlog-Time-Zone"] = zone;
+  const r = await fetch(url, { headers });
   if (!r.ok) throw new Error(`GET ${url} failed: ${r.status}`);
   return r.json();
 }
@@ -160,8 +164,7 @@ function startOfWeekLocal(d) {
 /* ---------- submit ---------- */
 async function submit() {
   updateEntryDateLabels();
-  const name = nameEl.value.trim();
-  const password = passEl.value;
+  const name = window.BitlogAccount.name();
   const text = textEl.value.trim();
 
   if (!name) return msg("name required");
@@ -173,13 +176,14 @@ async function submit() {
   try {
     const res = await fetch(api("/entry"), {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, password, text, date }),
+      headers: { "Content-Type": "application/json", ...window.BitlogAccount.authHeaders() },
+      body: JSON.stringify({ text, date, time_zone: window.BitlogAccount.timeZone() }),
     });
     const ct = res.headers.get("content-type") || "";
     const body = ct.includes("application/json")
       ? await res.json()
       : { ok: false, message: (await res.text()).slice(0, 200) };
+    if (res.status === 401) window.BitlogAccount.sessionExpired();
     if (!res.ok || body.ok === false)
       throw new Error(body.message || res.statusText);
     const dayStr = unixDayToISO(body.date);
@@ -862,7 +866,6 @@ $("#text").addEventListener("keydown", (e) => {
 textEl.addEventListener("input", resizeEntryText);
 textEl.addEventListener("input", updateWordCount);
 window.addEventListener("resize", resizeEntryText);
-$("#name").addEventListener("change", (e) => load(e.target.value.trim()));
 const everyoneBtn = $("#everyone-btn");
 if (everyoneBtn) everyoneBtn.addEventListener("click", (e) => {
   e.preventDefault();
@@ -873,7 +876,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   updateEntryDateLabels();
   resizeEntryText();
   updateWordCount();
-  await loadSavedLogin();
 
   const who = new URLSearchParams(location.search).get("u") || "";
   if (who) {

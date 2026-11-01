@@ -1,0 +1,17 @@
+[Unit]
+Description=Bitlog streak-expiry reminder sender (user-local 3 PM)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# Replace these example paths and account with your Gunicorn deployment details.
+WorkingDirectory=/opt/bitlog/backend
+EnvironmentFile=/etc/bitlog.env
+ExecStart=/opt/bitlog/venv/bin/python3 /opt/bitlog/backend/send_streak_reminders.py
+User=bitlog
+Group=bitlog
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

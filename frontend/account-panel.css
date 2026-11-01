@@ -1,0 +1,142 @@
+/* Account controls: deliberately small and part of the existing entry card. */
+#entry-box [hidden] { display: none !important; }
+
+#auth-loading,
+#auth-notice,
+#account-feedback {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+#auth-notice { margin-bottom: 0.45rem; }
+
+#auth-login,
+#auth-reset,
+#auth-compose {
+  width: 100%;
+}
+
+#auth-login-fields,
+#auth-reset-fields {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+#entry-box #auth-login input[type="text"],
+#entry-box #auth-login input[type="password"],
+#entry-box #auth-reset input[type="password"],
+#entry-box #account-settings input[type="email"],
+#entry-box #account-settings input[type="password"] {
+  min-width: 0;
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: 0.85rem 'Inter', sans-serif;
+  color: var(--fg);
+  background: var(--bg);
+}
+#entry-box #auth-login input:focus,
+#entry-box #auth-reset input:focus,
+#entry-box #account-settings input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-dim);
+}
+
+#auth-login-fields #login-name { flex: 1; }
+#auth-login-fields #login-password { flex: 1; }
+#auth-login-fields #login-submit,
+#auth-reset-fields #reset-submit { flex: 0 0 auto; }
+
+.auth-secondary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.55rem;
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+.auth-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.76rem;
+}
+.auth-checkbox input { accent-color: var(--accent); }
+#entry-box button.auth-link {
+  background: transparent;
+  color: var(--muted);
+  padding: 0;
+  border: 0;
+  font-size: 0.76rem;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.auth-reset-heading {
+  font-size: 0.83rem;
+  margin-bottom: 0.5rem;
+}
+
+#auth-account-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+}
+#account-username {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--fg);
+}
+#entry-box #account-settings-toggle {
+  background: transparent;
+  color: var(--muted);
+  border: 0;
+  padding: 0.15rem;
+  height: 24px;
+  width: 24px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+#entry-box #account-settings-toggle svg { display: block; }
+#entry-box #account-settings-toggle:hover { color: var(--accent); }
+
+#account-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.8rem;
+  margin: 0 0 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+}
+#entry-box #account-remove-email { align-self: flex-start; margin-top: -0.2rem; }
+#account-settings .auth-settings-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+#entry-box #account-logout {
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.76rem;
+  padding: 0.35rem 0;
+}
+#entry-box #account-save { padding: 0.4rem 0.75rem; }
+
+@media (max-width: 640px) {
+  #auth-login-fields { flex-wrap: wrap; }
+  #auth-login-fields #login-name,
+  #auth-login-fields #login-password { flex: 1 1 40%; }
+  #auth-login-fields #login-submit { flex: 1 1 100%; }
+  #auth-reset-fields { flex-wrap: wrap; }
+  #auth-reset-fields input { flex: 1 1 100%; }
+  #auth-reset-fields button { flex: 1 1 100%; }
+}

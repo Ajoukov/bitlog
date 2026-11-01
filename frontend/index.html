@@ -2,7 +2,8 @@
   <meta charset="UTF-8" />
   <title>bitlog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="styles.css?v=27" />
+  <link rel="stylesheet" href="styles.css?v=28" />
+  <link rel="stylesheet" href="account-panel.css?v=1" />
 </head>
 
 <body>
@@ -21,26 +22,71 @@
         of any posts on bitlog and (2) nothing is encrypted!
       </p>
       <section id="entry-box">
-        <div id="inline-form">
-          <input id="name" maxlength="40" placeholder="name" />
-          <input
-            id="password"
-            type="password"
-            placeholder="password (optional)"
-          />
-          <textarea id="text" maxlength="120" rows="1" placeholder="10 words max"></textarea>
-          <button id="submit">post</button>
-        </div>
-        <div id="entry-date">
-          <label>
-            <input type="radio" name="entry-date" value="0" checked />
-            <span id="today-date"></span>
-          </label>
-          <label>
-            <input type="radio" name="entry-date" value="1" />
-            <span id="yesterday-date"></span>
-          </label>
-          <span id="word-count"></span>
+        <div id="auth-loading">Checking sign-in...</div>
+        <div id="auth-notice" role="status" hidden></div>
+
+        <form id="auth-login" hidden>
+          <div id="auth-login-fields">
+            <input id="login-name" type="text" maxlength="40" placeholder="username" autocomplete="username" aria-label="Username" />
+            <input id="login-password" type="password" placeholder="password" autocomplete="current-password" aria-label="Password" />
+            <button id="login-submit" type="submit">continue</button>
+          </div>
+          <div class="auth-secondary-row">
+            <label class="auth-checkbox"><input id="login-stay" type="checkbox" checked /> stay signed in</label>
+            <button id="login-reset-email" type="button" class="auth-link">reset through email</button>
+          </div>
+        </form>
+
+        <form id="auth-reset" hidden>
+          <div class="auth-reset-heading">Choose a new password to continue.</div>
+          <div id="auth-reset-fields">
+            <input id="reset-new-password" type="password" placeholder="new password" autocomplete="new-password" aria-label="New password" />
+            <button id="reset-submit" type="submit">change password</button>
+          </div>
+          <div class="auth-secondary-row">
+            <label class="auth-checkbox"><input id="reset-stay" type="checkbox" checked /> stay signed in</label>
+          </div>
+        </form>
+
+        <div id="auth-compose" hidden>
+          <div id="auth-account-line">
+            <strong id="account-username"></strong>
+            <button id="account-settings-toggle" type="button" title="Account settings"
+                    aria-label="Account settings" aria-expanded="false">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+                   aria-hidden="true">
+                <path d="M12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8Z" />
+		<path d="M10 2h4l.6 2.8 1.6.7L18.6 4 21 6.4l-1.5 2.4.7 1.6L23 11v2l-2.8.6-.7 1.6 1.5 2.4-2.4 2.4-2.4-1.5-1.6.7L14 22h-4l-.6-2.8-1.6-.7-2.4 1.5L3 17.6l1.5-2.4-.7-1.6L1 13v-2l2.8-.6.7-1.6L3 6.4 5.4 4l2.4 1.5 1.6-.7Z" />
+              </svg>
+            </button>
+          </div>
+
+          <form id="account-settings" hidden>
+            <input id="account-email" type="email" maxlength="254" autocomplete="email"
+                   placeholder="Email address" aria-label="New email address (blank keeps current)" />
+            <button id="account-remove-email" type="button" class="auth-link" hidden>remove email</button>
+            <label class="auth-checkbox"><input id="account-reminders" type="checkbox" /> streak reminders</label>
+            <input id="account-new-password" type="password" placeholder="new password (optional)"
+                   autocomplete="new-password" aria-label="New password (optional)" />
+            <div id="account-feedback" role="status"></div>
+            <div class="auth-settings-actions">
+              <button id="account-logout" type="button">log out</button>
+              <button id="account-save" type="submit">save</button>
+            </div>
+          </form>
+
+          <div id="inline-form">
+            <input id="name" type="hidden" />
+            <input id="password" type="hidden" />
+            <textarea id="text" maxlength="120" rows="1" placeholder="10 words max"></textarea>
+            <button id="submit">post</button>
+          </div>
+          <div id="entry-date">
+            <label><input type="radio" name="entry-date" value="0" checked /><span id="today-date"></span></label>
+            <label><input type="radio" name="entry-date" value="1" /><span id="yesterday-date"></span></label>
+            <span id="word-count"></span>
+          </div>
         </div>
         <div id="msg"></div>
       </section>
@@ -70,5 +116,6 @@
       </div>
     </div>
   </main>
-  <script src="app.js?v=27"></script>
+  <script src="account-panel.js?v=2"></script>
+  <script src="app.js?v=29"></script>
 </body>

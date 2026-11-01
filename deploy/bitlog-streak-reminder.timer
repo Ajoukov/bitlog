@@ -1,0 +1,11 @@
+[Unit]
+Description=Check Bitlog streak risk every 5 minutes across user timezones
+
+[Timer]
+OnCalendar=*-*-* *:0/5:00 UTC
+AccuracySec=30s
+Persistent=true
+Unit=bitlog-streak-reminder.service
+
+[Install]
+WantedBy=timers.target
