@@ -47,6 +47,11 @@ main.three-col {
   align-self: start;
 }
 
+/* main cards: same padding on every side */
+#center section {
+  padding: 1.5rem;
+}
+
 #left-sidebar {
   align-self: start;
   position: sticky;
@@ -244,6 +249,11 @@ button:hover, .linklike:hover {
   min-height: 1.2em;
 }
 
+/* don't reserve empty space at the bottom of the card */
+#msg:empty {
+  display: none;
+}
+
 /* ── calendar heatmap ── */
 
 #viz h2 {
@@ -310,7 +320,7 @@ button:hover, .linklike:hover {
   border-bottom: 1px solid var(--border);
 }
 
-#timeline li:last-child { border-bottom: none; }
+#timeline li:last-child { border-bottom: none; padding-bottom: 0; }
 
 #timeline .date {
   font-family: 'JetBrains Mono', monospace;
@@ -591,6 +601,10 @@ a:hover { opacity: 0.75; }
   #left-sidebar,
   #right {
     padding: 1rem 1.1rem;
+  }
+
+  #center section {
+    padding: 1.1rem;
   }
 
   #inline-form {
