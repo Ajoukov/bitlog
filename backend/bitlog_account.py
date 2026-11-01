@@ -445,7 +445,7 @@ def init_account(app, users_tbl, get_user, invalidate_cache):
                     ExpressionAttributeNames={"#reset": "reset_password_hash", "#email": "email"},
                     ExpressionAttributeValues={":new": _reset_hash(reset_password), ":email": user["email"]},
                 )
-                base = os.getenv("BITLOG_URL", "https://bitlog.us/").rstrip("/") + "/"
+                base = os.getenv("BITLOG_URL", "https://bitlog.joukov.com/").rstrip("/") + "/"
                 link = base + "?" + urlencode({"user": username, "reset_pass": reset_password})
                 _smtp_send(
                     user["email"],
