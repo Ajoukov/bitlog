@@ -86,6 +86,12 @@
           <div id="entry-date">
             <label><input type="radio" name="entry-date" value="0" checked /><span id="today-date"></span></label>
             <label><input type="radio" name="entry-date" value="1" /><span id="yesterday-date"></span></label>
+            <label id="recovery-option" hidden>
+                <input type="radio" name="entry-date" value="custom" />
+                custom date
+            </label>
+            <input id="recovery-date" type="date" hidden />
+            <span id="recovery-count" hidden></span>
             <span id="word-count"></span>
           </div>
         </div>

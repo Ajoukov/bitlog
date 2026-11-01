@@ -10,6 +10,24 @@
   let removeEmailRequested = false;
   // Only in this page's memory. Never put it in a cookie or browser storage.
   let memoryToken = null;
+  let recoveryCredits = 0;
+  
+  function setRecoveryCredits(value) {
+    recoveryCredits = Math.max(0, Number(value) || 0);
+  
+    const option = el("recovery-option");
+    const count = el("recovery-count");
+    const picker = el("recovery-date");
+  
+    option.hidden = count.hidden = recoveryCredits === 0;
+    count.textContent = `${recoveryCredits} recoveries`;
+  
+    if (recoveryCredits === 0) {
+      if (option.querySelector("input").checked)
+        document.querySelector('input[name="entry-date"][value="0"]').checked = true;
+      picker.hidden = true;
+    }
+  }
 
   function authHeaders() {
     return memoryToken ? { Authorization: `Bearer ${memoryToken}` } : {};
@@ -62,6 +80,7 @@
 
   function updateUser(data) {
     activeName = data.name;
+    setRecoveryCredits(data.recovery_credits);
     currentPreferences = { ...data };
     delete currentPreferences.auth_token;
     el("name").value = activeName; // Retained for existing user-picker logic.
@@ -324,6 +343,8 @@
     timeZone,
     sessionExpired,
     refreshAuthentication,
+    setRecoveryCredits,
+    consumeRecovery: () => setRecoveryCredits(recoveryCredits - 1),
   };
   document.addEventListener("DOMContentLoaded", init);
 })();

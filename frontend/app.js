@@ -174,8 +174,13 @@ async function submit() {
   const w = countWords(text);
   if (w === 0) return msg("entry text required");
   if (w > 10) return msg(`max 10 words (have ${w})`);
-  const daysAgo = Number($('input[name="entry-date"]:checked').value);
-  const date = localUnixDay(daysAgo);
+  const selected = $('input[name="entry-date"]:checked').value;
+  const date = selected === "custom"
+    ? $("#recovery-date").valueAsNumber / DAY_MS
+    : localUnixDay(Number(selected));
+  
+  if (!Number.isInteger(date))
+    return msg("select a valid date");
   try {
     const res = await fetch(api("/entry"), {
       method: "POST",
@@ -189,6 +194,8 @@ async function submit() {
     if (res.status === 401) window.BitlogAccount.sessionExpired();
     if (!res.ok || body.ok === false)
       throw new Error(body.message || res.statusText);
+    if (body.recovery_used)
+      window.BitlogAccount.consumeRecovery();
     const dayStr = unixDayToISO(body.date);
     msg(`saved for ${dayStr} (${w} word${w === 1 ? "" : "s"})`);
     fireworks();
@@ -864,6 +871,24 @@ $("#text").addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
     e.preventDefault();
     submit();
+  }
+});
+$("#entry-date").addEventListener("change", async (event) => {
+  if (event.target.name !== "entry-date") return;
+
+  const picker = $("#recovery-date");
+  picker.hidden = $('input[name="entry-date"]:checked').value !== "custom";
+  if (picker.hidden) return;
+
+  picker.max = unixDayToISO(localUnixDay(0));
+
+  try {
+    const name = window.BitlogAccount.name();
+    const j = await cachedGet(api(`/calendar/${encodeURIComponent(name)}`));
+    if (j.entries?.length)
+      picker.min = unixDayToISO(Math.min(...j.entries.map(e => Number(e.date))));
+  } catch {
+    // The backend still validates the first allowed date.
   }
 });
 textEl.addEventListener("input", resizeEntryText);

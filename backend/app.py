@@ -17,6 +17,9 @@ from boto3.dynamodb.conditions import Key
 import json
 from cryptography.fernet import Fernet, InvalidToken
 
+from datetime import date
+from zoneinfo import ZoneInfo
+
 # ==================== Config ====================
 USERS_TABLE = os.getenv("USERS_TABLE", "journal_users")
 ENTRIES_TABLE = os.getenv("ENTRIES_TABLE", "journal_entries")
@@ -227,27 +230,75 @@ def create_entry():
     ts_sec = now_epoch_utc_seconds()
     date_sec = date_day * DAY_SECONDS
 
-    if date_sec < ts_sec - MAX_DATE_AGE_SECONDS:
-        abort(400, "date too old")
     if date_sec > ts_sec + MAX_DATE_FUTURE_SECONDS:
         abort(400, "date too far in the future")
 
     bitlog_account.update_time_zone(name, account_user, data.get("time_zone"))
-    try:
-        put_item(name, ts_sec, date_day, text)
-    except ClientError as e:
-        abort(500, e.response["Error"]["Message"])
+
+    # Same 18-hour shift as the frontend's localUnixDay().
+    zone = ZoneInfo(account_user.get("time_zone") or "UTC")
+    journal_day = datetime.fromtimestamp(ts_sec - 18 * 3600, zone).date()
+    min_free_day = (journal_day - date(1970, 1, 1)).days - 1
+
+    recovery_used = date_day < min_free_day
+
+    if recovery_used:
+        # A recovery cannot predate the user's first recorded journal day.
+        entries = query_user_range(name)
+        if not entries or date_day < min(int(e["date"]) for e in entries):
+            abort(400, "date is earlier than first post")
+
+        # Debit and insert must succeed or fail together.
+        try:
+            boto3.client("dynamodb", region_name=region).transact_write_items(
+                TransactItems=[
+                    {
+                        "Update": {
+                            "TableName": USERS_TABLE,
+                            "Key": {"name": {"S": name}},
+                            "UpdateExpression": "SET #c = #c - :one",
+                            "ConditionExpression": "attribute_exists(#n) AND #c >= :one",
+                            "ExpressionAttributeNames": {
+                                "#n": "name",
+                                "#c": "recovery_credits",
+                            },
+                            "ExpressionAttributeValues": {
+                                ":one": {"N": "1"},
+                            },
+                        }
+                    },
+                    {
+                        "Put": {
+                            "TableName": ENTRIES_TABLE,
+                            "Item": {
+                                "user": {"S": name},
+                                "ts": {"N": str(ts_sec)},
+                                "date": {"N": str(date_day)},
+                                "text": {"S": text},
+                            },
+                            "ConditionExpression": "attribute_not_exists(#ts)",
+                            "ExpressionAttributeNames": {"#ts": "ts"},
+                        }
+                    },
+                ]
+            )
+        except ClientError as e:
+            if e.response["Error"]["Code"] == "TransactionCanceledException":
+                abort(409, "no recoveries available or conflicting post")
+            abort(500, e.response["Error"]["Message"])
+    else:
+        try:
+            put_item(name, ts_sec, date_day, text)
+        except ClientError as e:
+            abort(500, e.response["Error"]["Message"])
 
     invalidate_cache()
-
-    resp = make_response(jsonify({
+    return jsonify({
         "ok": True,
         "ts": ts_sec,
         "date": date_day,
-    }))
-
-
-    return resp
+        "recovery_used": recovery_used,
+    })
 
 @app.route("/api/saved_login", methods=["GET"])
 def saved_login():

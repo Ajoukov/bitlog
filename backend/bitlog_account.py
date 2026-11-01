@@ -60,6 +60,7 @@ def account_payload(user, **extra):
         "has_email": bool(email),
         "email_masked": mask_email(email),
         "reminders_enabled": user.get("reminders_enabled") is True,
+        "recovery_credits": int(user.get("recovery_credits") or 0),
     }
     payload.update(extra)
     return payload

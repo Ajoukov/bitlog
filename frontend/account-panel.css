@@ -22,6 +22,15 @@
   gap: 0.5rem;
 }
 
+#entry-date { flex-wrap: wrap; }
+#recovery-date {
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.2rem;
+  color-scheme: dark;
+}
 #entry-box #auth-login input[type="text"],
 #entry-box #auth-login input[type="password"],
 #entry-box #auth-reset input[type="password"],
