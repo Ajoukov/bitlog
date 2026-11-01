@@ -45,6 +45,7 @@ const passEl = $("#password");
 const textEl = $("#text");
 const msgEl = $("#msg");
 const wordCountEl = $("#word-count");
+const wordCountMobileEl = $("#word-count-mobile");
 const whoEl = $("#who");
 const usersUl = $("#users");
 const allUl = $("#all-timeline"); // latest entries
@@ -80,8 +81,10 @@ function countWords(s) {
 /* live counter under the textarea */
 function updateWordCount() {
   const w = countWords(textEl.value);
-  wordCountEl.textContent = `${w}/10 word${w === 1 ? "" : "s"}`;
-  wordCountEl.classList.toggle("over", w > 10);
+  for (const el of [wordCountEl, wordCountMobileEl]) {
+    el.textContent = `${w}/10 word${w === 1 ? "" : "s"}`;
+    el.classList.toggle("over", w > 10);
+  }
 }
 
 /* ---------- interestingness scoring for heatmap ---------- */
