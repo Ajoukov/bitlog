@@ -217,7 +217,8 @@ button:hover, .linklike:hover {
   accent-color: var(--accent);
 }
 
-#word-count {
+#word-count,
+#word-count-mobile {
   margin-left: auto;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.72rem;
@@ -226,8 +227,14 @@ button:hover, .linklike:hover {
   transition: color 0.15s;
 }
 
-#word-count.over {
+#word-count.over,
+#word-count-mobile.over {
   color: #f08c8c;
+}
+
+/* mobile-only copy that sits next to the post button */
+#word-count-mobile {
+  display: none;
 }
 
 #msg {
@@ -609,7 +616,8 @@ a:hover { opacity: 0.75; }
   #inline-form #password { order: 2; }
   #inline-form #text     { order: 3; grid-column: 1 / -1; }
   #inline-form button    { order: 4; justify-self: start; padding: 0.65rem 1.2rem; }
-  #inline-form #word-count { order: 5; justify-self: end; }
+  #inline-form #word-count-mobile { order: 5; justify-self: end; display: inline; }
+  #entry-date #word-count { display: none; }
 
   #entry-date {
     flex-wrap: wrap;
