@@ -588,7 +588,8 @@ a:hover { opacity: 0.75; }
 
   #inline-form {
     display: grid !important;
-    grid-template-columns: 1fr;
+    grid-template-columns: auto 1fr;
+    align-items: center;
     gap: 0.5rem;
   }
 
@@ -606,8 +607,9 @@ a:hover { opacity: 0.75; }
 
   #inline-form #name    { order: 1; }
   #inline-form #password { order: 2; }
-  #inline-form #text     { order: 3; }
+  #inline-form #text     { order: 3; grid-column: 1 / -1; }
   #inline-form button    { order: 4; justify-self: start; padding: 0.65rem 1.2rem; }
+  #inline-form #word-count { order: 5; justify-self: end; }
 
   #entry-date {
     flex-wrap: wrap;
