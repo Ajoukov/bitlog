@@ -331,7 +331,7 @@ async function loadTimeline(name) {
 
     const d = document.createElement("span");
     d.className = "date";
-    d.textContent = decodeHTML(`${dayStr} - ${wc} word${wc === 1 ? "" : "s"}`);
+    d.textContent = decodeHTML(`${dayStr} - ${String(wc).padStart(2, "\u00a0")} word${wc === 1 ? "\u00a0" : "s"}`);
 
     const t = document.createElement("span");
     t.className = "txt";
@@ -714,7 +714,7 @@ async function loadGlobalTimeline() {
     d.className = "date";
     d.appendChild(
       document.createTextNode(
-        `${dayStr} - ${wc} word${wc === 1 ? "" : "s"} - `
+        `${dayStr} - ${String(wc).padStart(2, "\u00a0")} word${wc === 1 ? "\u00a0" : "s"} - `
       )
     );
     const name = document.createElement("a");
