@@ -298,6 +298,49 @@ button:hover, .linklike:hover {
   transition: background-color 0.15s;
 }
 
+.day[data-day] {
+  cursor: pointer;
+}
+
+.day[data-day]:hover {
+  outline: 1px solid var(--fg);
+  outline-offset: 1px;
+}
+
+/* hover card for a heatmap day (positioned by app.js) */
+#day-tooltip {
+  position: fixed;
+  z-index: 1500;
+  max-width: min(280px, calc(100vw - 16px));
+  padding: 0.45rem 0.65rem;
+  background: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+  font-size: 0.8rem;
+  line-height: 1.4;
+  pointer-events: none;
+}
+
+#day-tooltip[hidden] { display: none; }
+
+#day-tooltip .tip-head {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+#day-tooltip .tip-entry {
+  margin-top: 0.2rem;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+
+#day-tooltip .tip-entry.empty {
+  color: var(--muted);
+  font-style: italic;
+}
+
 .day[data-w="1"]  { background-color: rgba(124, 140, 244, 0.2); }
 .day[data-w="2"]  { background-color: rgba(124, 140, 244, 0.3); }
 .day[data-w="3"]  { background-color: rgba(124, 140, 244, 0.4); }
@@ -564,6 +607,91 @@ a:hover { opacity: 0.75; }
 
 #modal-users li:active {
   background: var(--accent-dim);
+}
+
+/* ── day-entries modal (click a heatmap day) ── */
+
+#day-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.6);
+  align-items: center;
+  justify-content: center;
+}
+
+#day-modal.open {
+  display: flex;
+}
+
+#day-modal-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  width: 90vw;
+  max-width: 420px;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#day-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+#day-modal-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+#day-modal-close {
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.2rem;
+  line-height: 1;
+  padding: 0.2rem 0.4rem;
+}
+
+#day-modal-list {
+  list-style: none;
+  overflow-y: auto;
+  flex: 1;
+  scrollbar-color: var(--border) transparent;
+}
+
+#day-modal-list li {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border);
+  overflow-wrap: anywhere;
+}
+
+#day-modal-list li:last-child { border-bottom: none; }
+
+#day-modal-list li.mine {
+  background: var(--accent-dim);
+}
+
+#day-modal-list li.note {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+#day-modal-list a {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+}
+
+#day-modal-list .txt {
+  display: block;
+  margin-top: 0.1rem;
+  white-space: pre-wrap;
+  font-size: 0.9rem;
 }
 
 /* ── mobile ── */

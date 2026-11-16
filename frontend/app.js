@@ -196,6 +196,7 @@ async function submit() {
       throw new Error(body.message || res.statusText);
     if (body.recovery_used)
       window.BitlogAccount.consumeRecovery();
+    invalidateMyDays();
     const dayStr = unixDayToISO(body.date);
     msg(`saved for ${dayStr} (${w} word${w === 1 ? "" : "s"})`);
     fireworks();
@@ -464,11 +465,7 @@ async function loadCalendar(name) {
       const cell = document.createElement("div");
       cell.className = "day";
       if (score > 0) cell.setAttribute("data-w", String(score));
-      const monthName = date.toLocaleString("en-US", { month: "long" });
-      const dayNum = date.getDate();
-      const yearNum = date.getFullYear();
-      const ord = ordinalSuffix(dayNum);
-      cell.title = `score ${score}/10 on ${monthName} ${dayNum}${ord} ${yearNum}`;
+      setDayCellInfo(cell, key, `score ${score}/10`);
       cell.style.gridRow = String(row + 2);
       cell.style.gridColumn = String(colToGridCol[c]);
 
@@ -647,7 +644,8 @@ async function loadGlobalCalendar() {
 
   for (let c = 0; c < columns.length; c++) {
     for (const { row, date } of columns[c].days) {
-      const contributors = dayToUsers.get(localDateToUnixDay(date))?.size || 0;
+      const key = localDateToUnixDay(date);
+      const contributors = dayToUsers.get(key)?.size || 0;
 
       const cell = document.createElement("div");
       cell.className = "day";
@@ -661,11 +659,8 @@ async function loadGlobalCalendar() {
         cell.setAttribute("data-w", String(shade));
       }
 
-      const monthName = date.toLocaleString("en-US", { month: "long" });
-      const dayNum = date.getDate();
-      const yearNum = date.getFullYear();
-      const ord = ordinalSuffix(dayNum);
-      cell.title = `${contributors} ${contributors === 1 ? "contributor" : "contributors"} on ${monthName} ${dayNum}${ord} ${yearNum}`;
+      setDayCellInfo(cell, key,
+        `${contributors} ${contributors === 1 ? "contributor" : "contributors"}`);
       cell.style.gridRow = String(row + 2);
       cell.style.gridColumn = String(colToGridCol[c]);
 
@@ -673,6 +668,196 @@ async function loadGlobalCalendar() {
     }
   }
   scrollCalendarToRight();
+}
+
+/* ---------- calendar day hover (your entry) + click (everyone's entries) ---------- */
+const dayTooltip = $("#day-tooltip");
+const dayModal = $("#day-modal");
+const dayModalTitle = $("#day-modal-title");
+const dayModalList = $("#day-modal-list");
+
+function longDate(day) {
+  const d = new Date(day * DAY_MS);
+  const monthName = d.toLocaleString("en-US", { month: "long", timeZone: "UTC" });
+  const n = d.getUTCDate();
+  return `${monthName} ${n}${ordinalSuffix(n)} ${d.getUTCFullYear()}`;
+}
+
+function setDayCellInfo(cell, day, stat) {
+  const label = `${stat} on ${longDate(day)}`;
+  cell.dataset.day = String(day);
+  cell.dataset.label = label;
+  cell.setAttribute("aria-label", label);
+  cell.setAttribute("role", "button");
+}
+
+/* The signed-in user's own day -> entry map, fetched once per name. */
+let myDays = { name: null, promise: null };
+
+function myDayToEntry() {
+  const me = window.BitlogAccount.name();
+  if (!me) return Promise.resolve(null);
+  if (myDays.name !== me || !myDays.promise) {
+    const promise = cachedGet(api(`/calendar/${encodeURIComponent(me)}`))
+      .then((j) => entries_to_dayToEntry(Array.isArray(j.entries) ? j.entries : []))
+      .catch(() => {
+        if (myDays.promise === promise) myDays.promise = null; // retry next hover
+        return null;
+      });
+    myDays = { name: me, promise };
+  }
+  return myDays.promise;
+}
+
+function invalidateMyDays() {
+  myDays = { name: null, promise: null };
+}
+
+let hoveredCell = null;
+
+function positionDayTooltip(cell) {
+  const r = cell.getBoundingClientRect();
+  const tw = dayTooltip.offsetWidth;
+  const th = dayTooltip.offsetHeight;
+  const margin = 8;
+  let left = r.left + r.width / 2 - tw / 2;
+  left = Math.max(margin, Math.min(left, window.innerWidth - tw - margin));
+  let top = r.top - th - 6;
+  if (top < margin) top = r.bottom + 6;
+  dayTooltip.style.left = `${left}px`;
+  dayTooltip.style.top = `${top}px`;
+}
+
+async function showDayTooltip(cell) {
+  hoveredCell = cell;
+  const day = Number(cell.dataset.day);
+
+  const head = document.createElement("div");
+  head.className = "tip-head";
+  head.textContent = cell.dataset.label;
+  dayTooltip.replaceChildren(head);
+
+  let body = null;
+  if (window.BitlogAccount.signedIn()) {
+    body = document.createElement("div");
+    body.className = "tip-entry empty";
+    body.textContent = "…";
+    dayTooltip.appendChild(body);
+  }
+
+  dayTooltip.hidden = false;
+  positionDayTooltip(cell);
+  if (!body) return;
+
+  const map = await myDayToEntry();
+  if (hoveredCell !== cell) return; // moved on while loading
+  const mine = map?.[day];
+  body.classList.toggle("empty", !mine);
+  body.textContent = mine
+    ? `you: ${decodeHTML(mine.text || "")}`
+    : map ? "you didn't post this day" : "couldn't load your entry";
+  positionDayTooltip(cell);
+}
+
+function hideDayTooltip() {
+  hoveredCell = null;
+  dayTooltip.hidden = true;
+}
+
+/* latest post per user for a given day, newest first */
+function entriesForDay(entries, day) {
+  const byUser = new Map();
+  for (const e of entries) {
+    if (e.date !== day) continue;
+    const prev = byUser.get(e.user);
+    if (!prev || e.ts > prev.ts) byUser.set(e.user, e);
+  }
+  return [...byUser.values()].sort((a, b) => b.ts - a.ts);
+}
+
+let dayModalToken = 0;
+
+function dayModalNote(text) {
+  const li = document.createElement("li");
+  li.className = "note";
+  li.textContent = text;
+  dayModalList.replaceChildren(li);
+}
+
+async function openDayModal(day) {
+  hideDayTooltip();
+  const token = ++dayModalToken;
+  dayModalTitle.textContent = longDate(day);
+  dayModalNote("loading…");
+  dayModal.classList.add("open");
+
+  let entries;
+  try {
+    const j = await cachedGet(api("/all_recent?limit=5000"));
+    entries = entriesForDay(Array.isArray(j.entries) ? j.entries : [], day);
+  } catch {
+    if (token === dayModalToken) dayModalNote("couldn't load entries");
+    return;
+  }
+  if (token !== dayModalToken) return;
+
+  if (!entries.length) {
+    dayModalNote("no entries this day");
+    return;
+  }
+
+  const me = window.BitlogAccount.name();
+  dayModalList.replaceChildren();
+  for (const e of entries) {
+    const li = document.createElement("li");
+    if (me && e.user === me) li.classList.add("mine");
+
+    const name = document.createElement("a");
+    name.textContent = decodeHTML("@" + e.user);
+    name.href = "#";
+    name.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      closeDayModal();
+      load(e.user);
+    });
+
+    const txt = document.createElement("span");
+    txt.className = "txt";
+    txt.textContent = decodeHTML(e.text || "");
+
+    li.appendChild(name);
+    li.appendChild(txt);
+    dayModalList.appendChild(li);
+  }
+}
+
+function closeDayModal() {
+  dayModalToken++;
+  dayModal.classList.remove("open");
+}
+
+{
+  const grid = $("#calendar");
+  grid.addEventListener("mouseover", (e) => {
+    const cell = e.target.closest(".day");
+    if (cell && cell !== hoveredCell) showDayTooltip(cell);
+    else if (!cell) hideDayTooltip();
+  });
+  grid.addEventListener("mouseleave", hideDayTooltip);
+  grid.addEventListener("scroll", hideDayTooltip);
+  window.addEventListener("scroll", hideDayTooltip, { passive: true });
+  grid.addEventListener("click", (e) => {
+    const cell = e.target.closest(".day");
+    if (cell) openDayModal(Number(cell.dataset.day));
+  });
+
+  dayModal.addEventListener("click", (e) => {
+    if (e.target === dayModal) closeDayModal();
+  });
+  $("#day-modal-close").addEventListener("click", closeDayModal);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && dayModal.classList.contains("open")) closeDayModal();
+  });
 }
 
 function htmlToText(s) {
