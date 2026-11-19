@@ -70,7 +70,7 @@ let userLastActive = new Map();
 // }
 
 const WORD_RE =
-  /(?:^|[^\p{L}\p{M}\p{N}_])([\p{L}\p{M}\p{N}_]+(?:[’'-][\p{L}\p{M}\p{N}_]+)*)/gu;
+  /(?:^|[^\p{L}\p{M}\p{N}_])([\p{L}\p{N}_][\p{L}\p{M}\p{N}_]*(?:[’'-][\p{L}\p{M}\p{N}_]+)*)/gu;
 
 function countWords(s) {
   let n = 0;
