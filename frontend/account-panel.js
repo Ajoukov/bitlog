@@ -20,7 +20,7 @@
     const picker = el("recovery-date");
   
     option.hidden = count.hidden = recoveryCredits === 0;
-    count.textContent = `${recoveryCredits} recoveries`;
+    count.textContent = `${recoveryCredits} recover${recoveryCredits === 1 ? "y" : "ies"}`;
   
     if (recoveryCredits === 0) {
       if (option.querySelector("input").checked)
