@@ -2,8 +2,8 @@
   <meta charset="UTF-8" />
   <title>bitlog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="styles.css?v=30" />
-  <link rel="stylesheet" href="account-panel.css?v=1" />
+  <link rel="stylesheet" href="styles.css?v=31" />
+  <link rel="stylesheet" href="account-panel.css?v=2" />
 </head>
 
 <body>
@@ -86,12 +86,14 @@
           <div id="entry-date">
             <label><input type="radio" name="entry-date" value="0" checked /><span id="today-date"></span></label>
             <label><input type="radio" name="entry-date" value="1" /><span id="yesterday-date"></span></label>
-            <label id="recovery-option" hidden>
-                <input type="radio" name="entry-date" value="custom" />
-                custom date
-            </label>
-            <input id="recovery-date" type="date" hidden />
-            <span id="recovery-count" hidden></span>
+            <span id="recovery-row">
+              <label id="recovery-option" hidden>
+                  <input type="radio" name="entry-date" value="custom" />
+                  custom date
+              </label>
+              <input id="recovery-date" type="date" hidden />
+              <span id="recovery-count" hidden></span>
+            </span>
             <span id="word-count"></span>
           </div>
         </div>
@@ -124,5 +126,5 @@
     </div>
   </main>
   <script src="account-panel.js?v=3"></script>
-  <script src="app.js?v=31"></script>
+  <script src="app.js?v=33"></script>
 </body>

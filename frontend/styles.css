@@ -222,6 +222,10 @@ button:hover, .linklike:hover {
   accent-color: var(--accent);
 }
 
+#recovery-row {
+  display: contents;
+}
+
 #word-count,
 #word-count-mobile {
   margin-left: auto;
@@ -568,7 +572,7 @@ a:hover { opacity: 0.75; }
 
 /* ── mobile ── */
 
-@media (max-width: 640px) {
+@media (max-width: 640px), (orientation: landscape) and (max-height: 500px) {
   main.three-col {
     display: flex;
     flex-direction: column;
@@ -642,6 +646,18 @@ a:hover { opacity: 0.75; }
     white-space: nowrap;
   }
 
+  #recovery-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+    flex-basis: 100%;
+  }
+
+  #recovery-row:not(:has(> :not([hidden]))) {
+    display: none;
+  }
+
   #users,
   #all-timeline {
     overflow-x: hidden;
@@ -655,4 +671,21 @@ a:hover { opacity: 0.75; }
   }
 
   html, body { overflow-x: hidden; }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  main.three-col {
+    display: grid;
+    grid-template-columns: min-content minmax(0, 1fr) 220px;
+    align-items: start;
+  }
+
+  #left-sidebar,
+  #right {
+    display: block;
+  }
+
+  #left-sidebar {
+    top: 1.5rem;
+  }
 }

@@ -140,7 +140,7 @@
 }
 #entry-box #account-save { padding: 0.4rem 0.75rem; }
 
-@media (max-width: 640px) {
+@media (max-width: 640px), (orientation: landscape) and (max-height: 500px) {
   #auth-login-fields { flex-wrap: wrap; }
   #auth-login-fields #login-name,
   #auth-login-fields #login-password { flex: 1 1 40%; }
