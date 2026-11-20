@@ -357,7 +357,7 @@ function scrollCalendarToRight() {
 }
 
 /* ---------- shared calendar grid builder ---------- */
-function setupCalendarGrid(grid) {
+function setupCalendarGrid(grid, days) {
   const CELL = 12;
   const GAP = 3;
   const SPACER = 8;
@@ -366,12 +366,13 @@ function setupCalendarGrid(grid) {
 
   const now = new Date();
   const end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const firstSunday = startOfWeekLocal(end);
-  firstSunday.setDate(firstSunday.getDate() - 52 * 7);
-  // Build all 371 days
+  const first = new Date(Math.min(...days, localDateToUnixDay(end)) * DAY_MS);
+  const start = new Date(first.getUTCFullYear(), 0, 1);
+  const firstSunday = startOfWeekLocal(start);
+  const weeks = Math.floor((localDateToUnixDay(end) - localDateToUnixDay(firstSunday)) / 7) + 1;
   const allDays = [];
   let cur = new Date(firstSunday);
-  for (let i = 0; i < 53 * 7; i++) {
+  for (let i = 0; i < weeks * 7; i++) {
     allDays.push(new Date(cur.getFullYear(), cur.getMonth(), cur.getDate()));
     cur.setDate(cur.getDate() + 1);
   }
@@ -379,7 +380,7 @@ function setupCalendarGrid(grid) {
   // Split weeks at month boundaries into columns
   // Each column: { days: [{row, date}], month, year }
   const columns = [];
-  for (let w = 0; w < 53; w++) {
+  for (let w = 0; w < weeks; w++) {
     const weekDays = allDays.slice(w * 7, w * 7 + 7);
     let curMonth = weekDays[0].getMonth();
     let curYear = weekDays[0].getFullYear();
@@ -398,6 +399,7 @@ function setupCalendarGrid(grid) {
     }
     columns.push(col);
   }
+  if (columns[0].days[0].date < start) columns.shift();
 
   // Build grid-template-columns with spacers between months
   const colDefs = [];
@@ -452,9 +454,8 @@ function setupCalendarGrid(grid) {
 /* We render weeks as columns and days (Sun..Sat) as rows. */
 async function loadCalendar(name) {
   const grid = $("#calendar");
-  const { columns, colToGridCol } = setupCalendarGrid(grid);
-
   const dayToEntry = await fetch_calendar(name);
+  const { columns, colToGridCol } = setupCalendarGrid(grid, Object.keys(dayToEntry).map(Number));
 
   for (let c = 0; c < columns.length; c++) {
     for (const { row, date } of columns[c].days) {
@@ -632,7 +633,6 @@ async function loadAll() {
 async function loadGlobalCalendar() {
   const grid = $("#calendar");
   if (!grid) return;
-  const { columns, colToGridCol } = setupCalendarGrid(grid);
 
   const j = await cachedGet(api("/all_recent?limit=5000"));
   const entries = Array.isArray(j.entries) ? j.entries : [];
@@ -644,6 +644,7 @@ async function loadGlobalCalendar() {
     if (!set) { set = new Set(); dayToUsers.set(e.date, set); }
     if (e.user) set.add(e.user);
   }
+  const { columns, colToGridCol } = setupCalendarGrid(grid, [...dayToUsers.keys()]);
 
   for (let c = 0; c < columns.length; c++) {
     for (const { row, date } of columns[c].days) {
