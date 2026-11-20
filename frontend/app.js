@@ -807,7 +807,7 @@ async function loadStreaks() {
 }
 
 /* ---------- user-picker modal ---------- */
-const MOBILE_MQ = "(max-width: 640px), (orientation: landscape) and (max-height: 500px)";
+const MOBILE_MQ = "(max-width: 640px), (orientation: landscape) and (max-height: 500px) and (min-width: 500px)";
 function isMobile() {
   return window.matchMedia(MOBILE_MQ).matches;
 }
