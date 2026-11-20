@@ -572,7 +572,7 @@ a:hover { opacity: 0.75; }
 
 /* ── mobile ── */
 
-@media (max-width: 640px), (orientation: landscape) and (max-height: 500px) {
+@media (max-width: 640px), (orientation: landscape) and (max-height: 500px) and (min-width: 500px) {
   main.three-col {
     display: flex;
     flex-direction: column;
@@ -673,7 +673,7 @@ a:hover { opacity: 0.75; }
   html, body { overflow-x: hidden; }
 }
 
-@media (orientation: landscape) and (max-height: 500px) {
+@media (orientation: landscape) and (max-height: 500px) and (min-width: 500px) {
   main.three-col {
     display: grid;
     grid-template-columns: min-content minmax(0, 1fr) 220px;
